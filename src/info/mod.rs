@@ -19,10 +19,12 @@ pub(crate) mod memory;
 pub(crate) mod motherboard;
 pub(crate) mod host;
 pub(crate) mod image;
+pub(crate) mod battery;
+pub(crate) mod disk;
+pub(crate) mod network;
 
 use std::fs;
 use std::path::PathBuf;
-
 
 use mlua::prelude::*;
 
@@ -44,6 +46,9 @@ use gpu::{ Gpus };
 use memory::{ Memory };
 use motherboard::{ Motherboard };
 use host::Host;
+use battery::Battery;
+use disk::Disk;
+use network::Network;
 
 pub(crate) struct Info {
 	ctx: Lua,
@@ -62,8 +67,11 @@ pub(crate) struct Info {
 	pub cpu: Option<Cpu>,
 	pub gpu: Option<Gpus>,
 	pub memory: Memory,
-  pub motherboard: Option<Motherboard>,
+	pub motherboard: Option<Motherboard>,
 	pub host: Option<Host>,
+	pub battery: Option<Battery>,
+	pub disk: Option<Disk>,
+	pub network: Option<Network>,
 }
 
 impl Info {
@@ -73,21 +81,48 @@ impl Info {
 			system.refresh_cpu_usage();
 			system.refresh_memory();
 		}
+		
+		// Sequential: Kernel must be first since others depend on it
 		let kernel = Kernel::new()?;
 		let context = Context::new();
 		let distro = Distro::new(&kernel);
 		let uptime = Uptime::new(&kernel)?;
 		let package_managers = PackageManagers::new(&kernel)?;
 		let shell = Shell::new(&kernel)?;
-		let resolution = Resolution::new(&kernel);
-		let de = De::new(&kernel, &distro);
-		let wm = Wm::new(&kernel);
-		let cpu = Cpu::new(&kernel);
-		let gpu = Gpus::new(&kernel);
-		let memory = Memory::new();
-        let motherboard = Motherboard::new(&kernel);
-		let host = Host::new(&kernel);
-        Ok(Info {
+		
+		// Parallel: Independent info gathering using rayon
+		// Use nested joins in pairs for parallel execution
+		let ((resolution, de), (wm, cpu)) = rayon::join(
+			|| rayon::join(
+				|| Resolution::new(&kernel),
+				|| De::new(&kernel, &distro),
+			),
+			|| rayon::join(
+				|| Wm::new(&kernel),
+				|| Cpu::new(&kernel),
+			),
+		);
+		
+		let ((gpu, motherboard), (host, battery)) = rayon::join(
+			|| rayon::join(
+				|| Gpus::new(&kernel),
+				|| Motherboard::new(&kernel),
+			),
+			|| rayon::join(
+				|| Host::new(&kernel),
+				|| Battery::new(),
+			),
+		);
+		
+		let ((disk, network), memory) = rayon::join(
+			|| rayon::join(
+				|| Disk::new(),
+				|| Network::new(),
+			),
+			Memory::new,
+		);
+		
+		Ok(Info {
 			ctx: Lua::new(),
 			rendered: String::new(),
 			width: 0,
@@ -104,8 +139,11 @@ impl Info {
 			cpu,
 			gpu,
 			memory,
-            motherboard,
+			motherboard,
 			host,
+			battery,
+			disk,
+			network,
 		})
 	}
 	pub fn render(&mut self) -> errors::Result<()> {
@@ -153,6 +191,9 @@ impl Inject for Info {
 		self.memory.inject(&mut self.ctx)?;
         if let Some(v) = &self.motherboard { v.inject(&mut self.ctx)?; }
 		if let Some(v) = &self.host { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.battery { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.disk { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.network { v.inject(&mut self.ctx)?; }
 		self.render()?;
 		{
 			let (w, h) = crate::utils::get_dimensions(&self.rendered);

@@ -262,6 +262,50 @@ if memory ~= nil then
 		.."MB")
 end
 
+-- Battery
+if battery ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."Battery"
+		..reset()
+		..": "
+		..battery.capacity
+		.."% ("
+		..battery.status
+		..")")
+end
+
+-- Disk
+if disk ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."Disk ("
+		..disk.mount_point
+		..")"
+		..reset()
+		..": "
+		..disk.used_gb
+		.."GB / "
+		..disk.total_gb
+		.."GB")
+end
+
+-- Network
+if network ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."Network"
+		..reset()
+		..": "
+		..network.interface
+		.." ("
+		..network.ip
+		..")")
+end
+
 -- Palette
 print("")
 print(""
