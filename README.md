@@ -4,12 +4,13 @@
 <br>
 <br>
 <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-<a href="https://github.com/k4rakara/freshfetch/releases"><img src="https://img.shields.io/github/v/release/K4rakara/freshfetch"></a>
+<a href="https://github.com/nordicnode/freshfetch/releases"><img src="https://img.shields.io/github/v/release/nordicnode/freshfetch"></a>
 </p>
 
 Freshfetch is a fast, customizable system information tool written in Rust.
-Originally forked from [freshfetch](https://github.com/K4rakara/freshfetch), this version has been
-extensively modernized with new features, improved performance, and robust error handling.
+
+**This is a personal continuation of the original freshfetch project, maintained by [nordicnode](https://github.com/nordicnode).**
+It has been extensively modernized from the original codebase with new features, improved performance, and robust error handling.
 
 ## Features
 
@@ -20,7 +21,7 @@ extensively modernized with new features, improved performance, and robust error
 - **Kernel** - Linux kernel version
 - **Uptime** - System uptime in days/hours/minutes
 - **Packages** - Package counts from dpkg, rpm, pacman, flatpak, snap, etc.
-- **Shell** - Current shell and version
+- **Shell** - Current shell and version (Bash, Zsh, Fish, Nushell, etc.)
 - **Resolution** - Display resolution and refresh rate
 - **DE** - Desktop environment and version (Cinnamon, GNOME, KDE, etc.)
 - **WM** - Window manager (Mutter, KWin, i3, etc.)
@@ -31,6 +32,11 @@ extensively modernized with new features, improved performance, and robust error
 - **Battery** - Capacity and status (laptops only)
 - **Disk** - Root partition usage
 - **Network** - Active interface and local IP
+
+### Output Options
+- **Standard** - Classic ASCII art + Info display
+- **JSON** - Machine-readable output via `--json`
+- **Logo Only** - pure ASCII art via `--logo`
 
 ### Customization
 - **Lua scripting** - Full control via `layout.lua`, `info.lua`, `art.lua`
@@ -93,6 +99,8 @@ Create custom layouts in `~/.config/freshfetch/`:
 
 ### v0.2.0 (2026)
 - **New info modules**: Battery, Disk, Network
+- **JSON Output**: Fully structured JSON output support
+- **Shell Detection**: Improved version detection for Bash, Fish, Nushell
 - **Parallel gathering**: Concurrent info collection with rayon
 - **mlua upgrade**: 0.6.6 → 0.9.9 for Rust compatibility
 - **Code quality**: Resolved 99 clippy warnings → 1 remaining (type complexity)
