@@ -7,7 +7,6 @@ use super::kernel;
 use std::fs;
 use std::env;
 use std::path::{ Path };
-use std::process::{ Command, Stdio };
 
 use mlua::prelude::*;
 
@@ -33,7 +32,7 @@ impl Distro {
 			"Linux"|"BSD"|"MINIX" => {
 				// Bedrock Linux
 				if Path::new("/bedrock/etc/bedrock-release").exists()
-				&& env::var("PATH").unwrap_or(String::new()).contains("/bedrock/cross/") {
+				&& env::var("PATH").unwrap_or_default().contains("/bedrock/cross/") {
 					long_name = fs::read_to_string("/bedrock/etc/bedrock-release")
 						.unwrap_or(String::from("Bedrock Linux"));
 					short_name = String::from("Bedrock Linux");
@@ -104,8 +103,8 @@ impl Distro {
 			_ => {} // Do nothing, unknown OS'es should have already exited by now.
 		}
 		Distro {
-			long_name: long_name,
-			short_name: short_name,
+			long_name,
+			short_name,
 			architecture: k.architecture.clone(),
 			colors: DistroColors::new(),
 		}

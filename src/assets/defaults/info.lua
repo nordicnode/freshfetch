@@ -24,7 +24,7 @@ if distro ~= nil then
 		.."OS"
 		..reset()
 		..": "
-		..distro.shortname
+		..distro.short_name
 		.." "
 		..distro.architecture)
 end

@@ -22,8 +22,8 @@ impl Gpu {
     #[inline]
     pub fn new(name: String, brand: String) -> Self {
         Gpu {
-            name: name,
-            brand: brand,
+            name,
+            brand,
         }
     }
 }
@@ -59,40 +59,39 @@ impl Gpus {
                     let regex = Regex::new(r#"(?i)"(.*?(?:Display|3D|VGA).*?)" "(.*?\[.*?\])" "(?:.*?\[(.*?)\])""#).unwrap();
 					let lspci_lines = lspci.split("\n").collect::<Vec<&str>>();
 					for line in lspci_lines.iter() {
-						let captures = regex.captures(&line);
-						match captures {
-							Some(captures) => {
-								to_return.push((
-									String::from(captures.get(1).unwrap().as_str()),
-									String::from(captures.get(2).unwrap().as_str()),
-									String::from(captures.get(3).unwrap().as_str()),
-								));
-							}
-							None => (),
-						}
+						let captures = regex.captures(line);
+						if let Some(captures) = captures {
+      								to_return.push((
+      									String::from(captures.get(1).unwrap().as_str()),
+      									String::from(captures.get(2).unwrap().as_str()),
+      									String::from(captures.get(3).unwrap().as_str()),
+      								));
+      							}
 					}
 					to_return
 				};
 
 				// Fix Intel integrated graphics crap
 				{
-                    if gpus.len() >= 2 {
-                        if gpus[0].1.to_lowercase().contains("intel")
+                    if gpus.len() >= 2
+                        && gpus[0].1.to_lowercase().contains("intel")
                         && gpus[1].1.to_lowercase().contains("intel") {
                             gpus.pop();
                         }
-                    }
 				}
 
-                let mut to_return: Vec<Gpu> = Vec::new(); 
+                let mut to_return: Vec<Gpu> = Vec::new();
+                
+                // Pre-compile regexes outside the loop
+                let amd_regex = Regex::new(r#".*?AMD.*?ATI.*?"#).unwrap();
+                let intel_regex = Regex::new(".*?Intel").unwrap();
+                let paren_regex = Regex::new(r#" \(.*?"#).unwrap();
+                let xeon_regex = Regex::new(r#".*?Xeon.*?"#).unwrap();
 
                 for gpu in gpus.iter_mut() {
                     if gpu.1.to_lowercase().contains("advanced") {
                         let mut brand = gpu.1.clone();
-                        {
-                            let regex = Regex::new(r#".*?AMD.*?ATI.*?"#).unwrap();
-                            brand = String::from(regex.replace_all(&brand, "AMD ATI"));
-                        }
+                        brand = String::from(amd_regex.replace_all(&brand, "AMD ATI"));
                         to_return.push(
                             Gpu::new(
                                 gpu.2.clone(),
@@ -111,23 +110,14 @@ impl Gpus {
                                     .replace("]", "")));
                     } else if gpu.1.to_lowercase().contains("intel") {
                         let mut brand = gpu.1.clone();
-                        brand = {
-                            let regex = Regex::new(".*?Intel").unwrap();
-                            String::from(regex.replace(&brand, "Intel"))
-                        };
+                        brand = String::from(intel_regex.replace(&brand, "Intel"));
                         brand = brand.replace("(R)", "").replace("Corporation", "");
-                        brand = {
-                            let regex = Regex::new(r#" \(.*?"#).unwrap();
-                            String::from(regex.replace_all(&brand, ""))
-                        };
+                        brand = String::from(paren_regex.replace_all(&brand, ""));
                         brand = brand
                             .replace("Integrated Graphics Controller", "");
-                        brand = {
-                            let regex = Regex::new(r#".*?Xeon.*?"#).unwrap();
-                            String::from(regex.replace(&brand, "Intel HD Graphics"))
-                        };
+                        brand = String::from(xeon_regex.replace(&brand, "Intel HD Graphics"));
                         brand = String::from(brand.trim());
-                        if brand == "" { brand = String::from("Intel HD Graphics"); }
+                        if brand.is_empty() { brand = String::from("Intel HD Graphics"); }
                         to_return.push(
                             Gpu::new(
                                 gpu.2.clone(),
@@ -135,7 +125,7 @@ impl Gpus {
                     }
                 }
 
-                if to_return.len() >= 1 {
+                if !to_return.is_empty() {
                     Some(Gpus(to_return))
                 } else {
                     None

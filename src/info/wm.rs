@@ -67,7 +67,7 @@ impl Wm {
 			match try_output {
 				Ok(output) => {
 					let stdout = String::from_utf8(output.stdout.clone()).unwrap_or_default();
-					if stdout != "" {
+					if !stdout.is_empty() {
 						Some(Wm(stdout))
 					} else {
 						None
@@ -122,22 +122,20 @@ impl Wm {
 				"FreeMiNT" => {
 					match fs::read_dir("/proc/") {
 						Ok(dir) => {
-							for try_file in dir {
-								if let Ok(file) = try_file {
-									if let Some(v) = file.path().file_name() {
-										let name = v.to_string_lossy();
-										if name.contains("xaaes") || name.contains("xaloader") {
-											return Some(Wm(String::from("XaAES")));
-										} else if name.contains("myaes") {
-											return Some(Wm(String::from("MyAES")));
-										} else if name.contains("naes") {
-											return Some(Wm(String::from("N.AES")));
-										} else if name.contains("geneva") {
-											return Some(Wm(String::from("Geneva")));
-										}
-									}
-								}
-							}
+							for file in dir.flatten() {
+       									if let Some(v) = file.path().file_name() {
+       										let name = v.to_string_lossy();
+       										if name.contains("xaaes") || name.contains("xaloader") {
+       											return Some(Wm(String::from("XaAES")));
+       										} else if name.contains("myaes") {
+       											return Some(Wm(String::from("MyAES")));
+       										} else if name.contains("naes") {
+       											return Some(Wm(String::from("N.AES")));
+       										} else if name.contains("geneva") {
+       											return Some(Wm(String::from("Geneva")));
+       										}
+       									}
+       								}
 							Some(Wm(String::from("Atari AES")))
 						}
 						Err(_) => Some(Wm(String::from("Atari AES"))),

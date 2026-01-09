@@ -4,7 +4,6 @@ use crate::mlua;
 
 use crate::errors;
 use super::kernel;
-use super::utils;
 
 use std::path::{ Path };
 
@@ -14,7 +13,6 @@ use sysinfo::{ System };
 
 use crate::{ Inject };
 use kernel::{ Kernel };
-use utils::{ get_system };
 
 pub(crate) struct Uptime ( pub DateTime<Utc> );
 

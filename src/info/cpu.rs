@@ -45,18 +45,17 @@ impl Cpu {
 							let mut to_return = None;
 							let mut skip = false;
 							for line in cpu_info_lines.iter() {
-								if !skip {
-									if line.starts_with("model name")
+								if !skip
+									&& (line.starts_with("model name")
 									|| line.starts_with("Hardware")
 									|| line.starts_with("Processor")
 									|| line.starts_with("cpu model")
 									|| line.starts_with("chip type")
-									|| line.starts_with("cpu type") {
+									|| line.starts_with("cpu type")) {
 										let split: Vec<&str> = line.split(": ").collect();
 										to_return = Some(String::from(split[1]));
 										skip = true;
 									}
-								}
 							}
 							to_return
 						};
@@ -72,17 +71,14 @@ impl Cpu {
 								];
 								for file in to_check.iter() {
 									if to_return.is_none() {
-										match fs::read_to_string(file) {
-											Ok(mut bios_limit) => {
-												bios_limit = bios_limit
-													.replace("\n", "")
-													.replace("\t", "");
-												if let Ok(freq) = bios_limit.parse::<f32>() {
-													to_return = Some(freq / 1000.0);
-												}
-											}
-											Err(_) => (),
-										}
+										if let Ok(mut bios_limit) = fs::read_to_string(file) {
+          												bios_limit = bios_limit
+          													.replace("\n", "")
+          													.replace("\t", "");
+          												if let Ok(freq) = bios_limit.parse::<f32>() {
+          													to_return = Some(freq / 1000.0);
+          												}
+          											}
 									}
 								}
 								to_return
@@ -90,15 +86,14 @@ impl Cpu {
 								let mut to_return = None;
 								let mut skip = false;
 								for line in cpu_info_lines.iter() {
-									if !skip {
-										if line.starts_with("cpu MHz")
-										|| line.starts_with("clock") {
+									if !skip
+										&& (line.starts_with("cpu MHz")
+										|| line.starts_with("clock")) {
 											let split: Vec<&str> = line.split(": ").collect();
 											let to_parse = String::from(split[1]).replace("MHz", "");
 											to_return = to_parse.parse::<f32>().ok().map(|f| f / 1000.0);
 											skip = true;
 										}
-									}
 								}
 								to_return
 							}
@@ -168,8 +163,8 @@ impl Cpu {
 					to_return
 				},
 				full_name: name.clone().unwrap(),
-				freq: freq.clone().unwrap(),
-				cores: cores.clone().unwrap(),
+				freq: freq.unwrap(),
+				cores: cores.unwrap(),
 			})
 		} else {
 			None

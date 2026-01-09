@@ -1,5 +1,3 @@
-use crate::regex;
-use crate::sysinfo;
 use crate::mlua;
 
 use crate::errors;
@@ -23,10 +21,9 @@ pub(crate) mod host;
 pub(crate) mod image;
 
 use std::fs;
-use std::path::{ Path, PathBuf };
+use std::path::PathBuf;
 
 
-use sysinfo::{ System };
 use mlua::prelude::*;
 
 use crate::{ Inject };
@@ -95,18 +92,18 @@ impl Info {
 			rendered: String::new(),
 			width: 0,
 			height: 0,
-			context: context,
-			distro: distro,
-			kernel: kernel,
-			uptime: uptime,
-			package_managers: package_managers,
-			shell: shell,
-			resolution: resolution,
-			de: de,
-			wm: wm,
-			cpu: cpu,
-			gpu: gpu,
-			memory: memory,
+			context,
+			distro,
+			kernel,
+			uptime,
+			package_managers,
+			shell,
+			resolution,
+			de,
+			wm,
+			cpu,
+			gpu,
+			memory,
             motherboard,
 			host,
 		})

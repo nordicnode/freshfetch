@@ -1,4 +1,3 @@
-use crate::regex;
 use crate::mlua;
 
 use crate::assets::ascii_art;
@@ -8,8 +7,7 @@ use crate::assets;
 use info::distro;
 
 use std::fs;
-use std::env;
-use std::path::{ Path, PathBuf };
+use std::path::PathBuf;
 
 use mlua::prelude::*;
 

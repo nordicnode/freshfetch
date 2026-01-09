@@ -39,17 +39,17 @@ impl Motherboard {
                 || sys_devices_virtual_dmi_id.join("board_version").is_file()) {
                     Some(Motherboard {
                         name: read_to_string(sys_devices_virtual_dmi_id.join("board_name"))
-                            .unwrap_or(String::new())
+                            .unwrap_or_default()
                             .replace("\n", " ")
                             .trim()
                             .to_string(),
                         vendor: read_to_string(sys_devices_virtual_dmi_id.join("board_vendor"))
-                            .unwrap_or(String::new())
+                            .unwrap_or_default()
                             .replace("\n", " ")
                             .trim()
                             .to_string(),
                         revision: read_to_string(sys_devices_virtual_dmi_id.join("board_version"))
-                            .unwrap_or(String::new())
+                            .unwrap_or_default()
                             .replace("\n", " ")
                             .trim()
                             .to_string(),
@@ -74,48 +74,26 @@ impl Motherboard {
             }
             "Windows" /*(ew)*/ => {
                 // TODO: Get someone to test this.
-                let try_wmic = {
-                    let try_output = Command::new("wmic")
-                        .arg("baseboard")
-                        .arg("get")
-                        .arg("product,manufacturer")
-                        .output();
-                    match try_output {
-                        Ok(output) => match String::from_utf8(output.stdout) {
-                            Ok(stdout) => Some(stdout),
-                            Err(_) => None,
-                        }
-                        Err(_) => None,
+                let try_wmic = Command::new("wmic")
+                    .arg("baseboard")
+                    .arg("get")
+                    .arg("product,manufacturer")
+                    .output()
+                    .ok()
+                    .and_then(|o| String::from_utf8(o.stdout).ok());
+                try_wmic.and_then(|wmic| {
+                    let lines = wmic.split("\n").collect::<Vec<&str>>();
+                    if lines.len() >= 2 {
+                        let regex = Regex::new(r#"(\S+)\s+(\S+)"#).unwrap();
+                        regex.captures(lines[1]).map(|caps| Motherboard {
+                            name: String::from(caps.get(1).unwrap().as_str()),
+                            vendor: String::from(caps.get(2).unwrap().as_str()),
+                            revision: String::new(),
+                        })
+                    } else {
+                        None
                     }
-                };
-                match try_wmic {
-                    Some(wmic) => {
-                        let try_name_n_vendor = {
-                            let lines = wmic.split("\n").collect::<Vec<&str>>();
-                            if lines.len() >= 2 {
-                                let regex = Regex::new(r#"(\S+)\s+(\S+)"#).unwrap();
-                                match regex.captures(&lines[1]) {
-                                    Some(caps) => Some((
-                                        String::from(caps.get(1).unwrap().as_str()),
-                                        String::from(caps.get(2).unwrap().as_str()),
-                                    )),
-                                    None => None,
-                                }
-                            } else {
-                                None
-                            }
-                        };
-                        match try_name_n_vendor {
-                            Some((name, vendor)) => Some(Motherboard {
-                                name,
-                                vendor,
-                                revision: String::new(),
-                            }),
-                            None => None
-                        }
-                    }
-                    None => None,
-                }
+                })
             }
             _ => None,
         }

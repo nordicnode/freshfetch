@@ -11,7 +11,7 @@ enum Check {
 /// `_.2`: `Option<&'static str>` -- The `shortname` of this art, if it is different than the CLI name.
 /// `_.3`: `&'static str` -- The actual string of the art.
 /// `_.4`: `bool` -- if this art needs to be parsed at runtime or not.
-static ASCII_ART: &[(&'static str, Check, Option<&'static str>, &'static str, Option<[Option<&'static str>; 4]>)] = &[
+static ASCII_ART: &[(&str, Check, Option<&'static str>, &str, Option<[Option<&'static str>; 4]>)] = &[
     ( "aix",				Check::StartsWith,	Some("AIX"),						include_str!("./large/a/.aix.clml"),				Some([Some("\u{001b}[38;5;2m"), Some("\u{001b}[38;5;7m"), None, None]),	),
     ( "alpine",				Check::Is,			Some("Alpine"),						include_str!("./large/a/.alpine.clml"),				Some([Some("\u{001b}[38;5;6m"), Some("\u{001b}[38;5;7m"), None, None]),	),
 	( "alpine_small",		Check::Is,			None,								include_str!("./small/a/.alpine.clml"),				Some([Some("\u{001b}[38;5;4m"), Some("\u{001b}[38;5;5m"), Some("\u{001b}[38;5;7m"), Some("\u{001b}[38;5;6m")]),	),
@@ -293,27 +293,21 @@ pub(crate) fn get(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
 			Check::Is => {
 				if art.2.is_none() {
 					if of.to_lowercase() == art.0.to_lowercase() { return get_tuple(); }
-				} else {
-					if of.to_lowercase() == art.2.clone().unwrap().to_lowercase() { return get_tuple(); }
-				}
+				} else if of.to_lowercase() == art.2.unwrap().to_lowercase() { return get_tuple(); }
 			}
 			Check::Contains => {
 				if art.2.is_none() {
 					if of.to_lowercase().contains(&art.0.to_lowercase()) { return get_tuple(); }
-				} else {
-					if of.contains(&art.2.clone().unwrap()) { return get_tuple(); }
-				}
+				} else if of.contains(art.2.unwrap()) { return get_tuple(); }
 			}
 			Check::StartsWith => {
 				if art.2.is_none() {
 					if of.to_lowercase().starts_with(&art.0.to_lowercase()) { return get_tuple(); }
-				} else {
-					if of.to_lowercase().starts_with(&art.2.clone().unwrap().to_lowercase()) { return get_tuple(); }
-				}
+				} else if of.to_lowercase().starts_with(&art.2.unwrap().to_lowercase()) { return get_tuple(); }
 			}
 		}
 	}
-	return get_cli("linux");
+	get_cli("linux")
 }
 
 pub(crate) fn get_cli(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
@@ -322,5 +316,5 @@ pub(crate) fn get_cli(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
 			return (art.3, art.4.unwrap_or([Some("\u{001b}[38;5;7m"), None, None, None]));
 		}
 	}
-	return get_cli("linux");
+	get_cli("linux")
 }

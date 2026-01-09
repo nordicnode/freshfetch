@@ -54,8 +54,8 @@ impl Shell {
 			}
 		}
 		Ok(Shell {
-			name: name,
-			version: version,
+			name,
+			version,
 		})
 	}
 }

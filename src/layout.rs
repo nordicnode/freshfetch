@@ -21,12 +21,12 @@ pub(crate) struct Layout {
 impl Layout {
 	pub fn new(args: &Arguments) -> errors::Result<Self> {
 		let mut info = Info::new()?;
-		let art = Art::new(&mut info, &args)?;
+		let art = Art::new(&mut info, args)?;
 		let terminal = Terminal::new();
 		Ok(Layout {
-			art: art,
-			info: info,
-			terminal: terminal,
+			art,
+			info,
+			terminal,
 		})
 	}
 }

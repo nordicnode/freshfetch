@@ -38,7 +38,7 @@ impl Kernel {
 			}
 		}
 		Ok(Kernel {
-			name: name,
+			name,
 			version: uname.release,
 			architecture: uname.machine,
 		})

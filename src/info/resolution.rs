@@ -42,7 +42,7 @@ impl Resolution {
                         let try_xrandr = Command::new("sh")
                             .arg("-c")
                             .arg("xrandr --nograb --current")
-                            .envs(&mut vars())
+                            .envs(vars())
                             .output();
                         match try_xrandr {
                             Ok(xrandr) => match String::from_utf8(xrandr.stdout) {
@@ -62,45 +62,42 @@ impl Resolution {
                     {
                         let regex = Regex::new(r#"\s+(?:(\d+)x(\d+))\s+((?:\d+)\.(?:\d+)\*)"#).unwrap();
                         for line in xrandr_lines.iter() {
-                            match regex.captures(&line) {
-                                Some(caps) => {
-                                    match caps.get(1) {
-                                        Some(cap) => match cap.as_str().parse::<u16>() {
-                                            Ok(width) => to_return.width = width,
-                                            // `unreachable!()` used here b/c
-                                            // only digit characters should
-                                            // be here.
-                                            Err(_) => unreachable!(),
-                                        }
-                                        // `unreachable!()` used here because
-                                        // its a required match.
-                                        None => unreachable!(),
+                            if let Some(caps) = regex.captures(line) {
+                                match caps.get(1) {
+                                    Some(cap) => match cap.as_str().parse::<u16>() {
+                                        Ok(width) => to_return.width = width,
+                                        // `unreachable!()` used here b/c
+                                        // only digit characters should
+                                        // be here.
+                                        Err(_) => unreachable!(),
                                     }
-                                    match caps.get(2) {
-                                        Some(cap) => match cap.as_str().parse::<u16>() {
-                                            Ok(height) => to_return.height = height,
+                                    // `unreachable!()` used here because
+                                    // its a required match.
+                                    None => unreachable!(),
+                                }
+                                match caps.get(2) {
+                                    Some(cap) => match cap.as_str().parse::<u16>() {
+                                        Ok(height) => to_return.height = height,
+                                        // Same reason as above.
+                                        Err(_) => unreachable!(),
+                                    }
+                                    // Same reason as above.
+                                    None => unreachable!(),
+                                }
+                                match caps.get(3) {
+                                    Some(cap) => {
+                                        let mut v = String::from(cap.as_str());
+                                        v = v.replace("*", "");
+                                        match v.parse::<f32>() {
+                                            Ok(refresh) => to_return.refresh = Some(refresh),
                                             // Same reason as above.
                                             Err(_) => unreachable!(),
                                         }
-                                        // Same reason as above.
-                                        None => unreachable!(),
                                     }
-                                    match caps.get(3) {
-                                        Some(cap) => {
-                                            let mut v = String::from(cap.as_str());
-                                            v = v.replace("*", "");
-                                            match v.parse::<f32>() {
-                                                Ok(refresh) => to_return.refresh = Some(refresh),
-                                                // Same reason as above.
-                                                Err(_) => unreachable!(),
-                                            }
-                                        }
-                                        // Same reason as above.
-                                        None => unreachable!(),
-                                    }
-                                    return Some(to_return);
+                                    // Same reason as above.
+                                    None => unreachable!(),
                                 }
-                                None => (),
+                                return Some(to_return);
                             }
                         }
                     }
@@ -118,7 +115,7 @@ impl Resolution {
                         let try_xwininfo = Command::new("sh")
                             .arg("-c")
                             .arg("xwininfo -root")
-                            .envs(&mut vars())
+                            .envs(vars())
                             .output();
                         match try_xwininfo {
                             Ok(xwininfo) => match String::from_utf8(xwininfo.stdout) {
@@ -140,32 +137,26 @@ impl Resolution {
                     let mut height_regex_captured = false;
 
                     for line in xwininfo_lines.iter() {
-                        match width_regex.captures(&line) {
-                            Some(caps) => match caps.get(1) {
-                                Some(cap) => match cap.as_str().parse::<u16>() {
-                                    Ok(width) => {
-                                        to_return.width = width;
-                                        width_regex_captured = true;
-                                    }
-                                    Err(_) => unreachable!(),
+                        if let Some(caps) = width_regex.captures(line) { match caps.get(1) {
+                            Some(cap) => match cap.as_str().parse::<u16>() {
+                                Ok(width) => {
+                                    to_return.width = width;
+                                    width_regex_captured = true;
                                 }
-                                None => unreachable!(),
+                                Err(_) => unreachable!(),
                             }
-                            None => (),
-                        }
-                        match height_regex.captures(&line) {
-                            Some(caps) => match caps.get(1) {
-                                Some(cap) => match cap.as_str().parse::<u16>() {
-                                    Ok(height) => {
-                                        to_return.height = height;
-                                        height_regex_captured = true;
-                                    }
-                                    Err(_) => unreachable!(),
+                            None => unreachable!(),
+                        } }
+                        if let Some(caps) = height_regex.captures(line) { match caps.get(1) {
+                            Some(cap) => match cap.as_str().parse::<u16>() {
+                                Ok(height) => {
+                                    to_return.height = height;
+                                    height_regex_captured = true;
                                 }
-                                None => unreachable!(),
+                                Err(_) => unreachable!(),
                             }
-                            None => (),
-                        }
+                            None => unreachable!(),
+                        } }
                     }
 
                     if width_regex_captured
@@ -174,32 +165,30 @@ impl Resolution {
                     }
                 } else if Path::new("/sys/class/drm/").is_dir() {
                     if let Ok(entries) = Path::new("/sys/class/drm/").read_dir() {
-                        for entry in entries {
-                            if let Ok(entry) = entry {
-                                if entry.path().join("modes").is_file() {
-                                    let modes_string = match read_to_string(entry.path().join("modes")) {
-                                        Ok(modes) => modes,
-                                        Err(_) => return None,
-                                    };
+                        for entry in entries.flatten() {
+                            if entry.path().join("modes").is_file() {
+                                let modes_string = match read_to_string(entry.path().join("modes")) {
+                                    Ok(modes) => modes,
+                                    Err(_) => return None,
+                                };
 
-                                    let modes_lines = modes_string
-                                        .split("\n")
+                                let modes_lines = modes_string
+                                    .split("\n")
+                                    .collect::<Vec<&str>>();
+
+                                for line in modes_lines.iter() {
+                                    let line_split = line
+                                        .split("x")
                                         .collect::<Vec<&str>>();
-
-                                    for line in modes_lines.iter() {
-                                        let line_split = line
-                                            .split("x")
-                                            .collect::<Vec<&str>>();
-                                        let width = line_split.get(0);
-                                        let height = line_split.get(1);
-                                        if width.is_some()
-                                        && height.is_some() {
-                                            return Some(Resolution {
-                                                width: width.unwrap().parse::<u16>().unwrap(),
-                                                height: height.unwrap().parse::<u16>().unwrap(),
-                                                refresh: None,
-                                            });
-                                        }
+                                    let width = line_split.first();
+                                    let height = line_split.get(1);
+                                    if width.is_some()
+                                    && height.is_some() {
+                                        return Some(Resolution {
+                                            width: width.unwrap().parse::<u16>().unwrap(),
+                                            height: height.unwrap().parse::<u16>().unwrap(),
+                                            refresh: None,
+                                        });
                                     }
                                 }
                             }

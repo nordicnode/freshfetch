@@ -20,7 +20,7 @@ impl PackageManager {
 	pub fn new(name: &str, packages: i32) -> Self {
 		PackageManager {
 			name: String::from(name),
-			packages: packages,
+			packages,
 		}
 	}
 }

@@ -61,14 +61,14 @@ fn progress(min: usize, max: usize) -> String {
 
 fn main() {
 	let base = Path::new("./src/assets/ascii_art/");
-	let buildlist = get_buildlist(&base);
+	let buildlist = get_buildlist(base);
 	let len = buildlist.len();
 	for (i, target) in buildlist.iter().enumerate() {
 		println!("\u{001b}[1A\r\u{001b}[K    \u{001b}[1m\u{001b}[36mBuilding\u{001b}[0m{}ASCII art",
 			progress(i, len));
-		let input = fs::read_to_string(&target.0).expect(&format!("Failed to read the file \"{:?}\"!", &target.0));
+		let input = fs::read_to_string(&target.0).unwrap_or_else(|_| panic!("Failed to read the file \"{:?}\"!", &target.0));
 		let output = clml(&input);
-		fs::write(&target.1, &output).expect(&format!("Failed to write to the file \"{:?}\"!", &target.1));
+		fs::write(&target.1, &output).unwrap_or_else(|_| panic!("Failed to write to the file \"{:?}\"!", &target.1));
 	}
 	println!("\u{001b}[1A\r\u{001b}[K    \u{001b}[1m\u{001b}[32mFinished\u{001b}[0m ASCII art");
 	{

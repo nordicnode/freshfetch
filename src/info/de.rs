@@ -28,31 +28,29 @@ impl De {
 					} else {
 						Some(De(String::from("Aero"), String::new()))
 					}
-				} else {
-					if if let Ok(desktop_session) = env::var("DESKTOP_SESSION") { desktop_session == "regolith" } else { false } {
-						Some(De(String::from("Regolith"), String::new()))
-					} else if let Ok(mut current_desktop) = env::var("XDG_CURRENT_DESKTOP") {
-						current_desktop = current_desktop.replace("X-", "");
-						// The following is from neofetch, and I have
-						// literally no idea what it does (~line 1718):
-						// ```bash
-						// de=${de/Budgie:GNOME/Budgie}
-						// de=${de/:Unity7:ubuntu}
-						// ```
-						// Unless somebody opens a PR with whatever
-						// that is in Rust, I'm just gonna pretend that
-						// code doesn't exist lol.
-						Some(De(current_desktop, String::new()))
-					} else if env::var("GNOME_DESKTOP_SESSION_ID").is_ok() {
-						Some(De(String::from("GNOME"), String::new()))
-					} else if env::var("MATE_DESKTOP_SESSION_ID").is_ok() {
-						Some(De(String::from("MATE"), String::new()))
-					} else if env::var("TDE_FULL_SESSION").is_ok() {
-						Some(De(String::from("Trinity"), String::new()))
-					} else {
-						None
-					}
-				}
+				} else if if let Ok(desktop_session) = env::var("DESKTOP_SESSION") { desktop_session == "regolith" } else { false } {
+    						Some(De(String::from("Regolith"), String::new()))
+    					} else if let Ok(mut current_desktop) = env::var("XDG_CURRENT_DESKTOP") {
+    						current_desktop = current_desktop.replace("X-", "");
+    						// The following is from neofetch, and I have
+    						// literally no idea what it does (~line 1718):
+    						// ```bash
+    						// de=${de/Budgie:GNOME/Budgie}
+    						// de=${de/:Unity7:ubuntu}
+    						// ```
+    						// Unless somebody opens a PR with whatever
+    						// that is in Rust, I'm just gonna pretend that
+    						// code doesn't exist lol.
+    						Some(De(current_desktop, String::new()))
+    					} else if env::var("GNOME_DESKTOP_SESSION_ID").is_ok() {
+    						Some(De(String::from("GNOME"), String::new()))
+    					} else if env::var("MATE_DESKTOP_SESSION_ID").is_ok() {
+    						Some(De(String::from("MATE"), String::new()))
+    					} else if env::var("TDE_FULL_SESSION").is_ok() {
+    						Some(De(String::from("Trinity"), String::new()))
+    					} else {
+    						None
+    					}
 			}
 		};
 		if let Some(mut to_return) = to_return {

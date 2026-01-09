@@ -1,11 +1,9 @@
 use crate::mlua;
-use crate::sysinfo;
 
 use super::utils;
 use crate::errors;
 
 use mlua::prelude::*;
-use sysinfo::{ System };
 
 use crate::{ Inject };
 use utils::{ get_system };

@@ -40,7 +40,7 @@ impl Host {
                     product_name = String::from(regex.replace_all(&product_name, ""));
                 }
                 product_name = String::from(product_name.trim());
-                if product_name != "" {
+                if !product_name.is_empty() {
                     Some(Host {
                         model: product_name,
                     })

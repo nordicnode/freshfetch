@@ -26,9 +26,8 @@ use assets::defaults::LAYOUT;
 use assets::{ANSI, HELP, PRINT};
 use layout::Layout;
 
-use std::env::var;
 use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub(crate) struct Arguments {
 	pub ascii_distro: Option<String>,

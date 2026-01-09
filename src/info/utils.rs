@@ -1,7 +1,6 @@
 use crate::sysinfo;
 
 use std::sync::{ Mutex, MutexGuard };
-use regex::{ Regex };
 use sysinfo::{ System };
 
 lazy_static! {
@@ -21,7 +20,7 @@ pub(crate) struct Grep {
 fn grep(through: Vec<String>, conf: Grep) -> Vec<String> {
 	let mut conf = conf.clone();
 	if conf.searches.is_none() && conf.search.is_some() { conf.searches = Some(vec![conf.search.clone().unwrap()]); }
-	if conf.searches.is_none() { return vec![]; }
+	if conf.searches.is_none() { vec![]}
 	else {
 		let mut to_return = Vec::new();
 		let mut i = 0usize;
@@ -52,7 +51,7 @@ impl PsAux {
 		PsAux({
 			let mut to_return: Vec<String> = Vec::new();
 			let system = get_system();
-			for (_, proc) in system.processes() { to_return.push(String::from(proc.name())); }
+			for proc in system.processes().values() { to_return.push(String::from(proc.name())); }
 			to_return
 		})
 	}
