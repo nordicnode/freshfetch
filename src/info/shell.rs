@@ -45,6 +45,56 @@ impl Shell {
                         version = String::from_utf8(output.stdout)
                             .map_err(|e| errors::FreshfetchError::General(format!("Invalid UTF8 from zsh version: {}", e)))?;
 					}
+					"bash" => {
+						// bash --version outputs: GNU bash, version 5.1.16(1)-release ...
+						let output = Command::new("bash")
+							.arg("--version")
+							.output()
+							.map_err(|e| errors::FreshfetchError::Command("bash --version".to_string(), e.to_string()))?;
+						
+						let stdout = String::from_utf8(output.stdout)
+							.map_err(|e| errors::FreshfetchError::General(format!("Invalid UTF8 from bash version: {}", e)))?;
+						
+						// Parse version from first line: "GNU bash, version X.Y.Z..."
+						version = stdout
+							.lines()
+							.next()
+							.and_then(|line| {
+								line.split("version ")
+									.nth(1)
+									.map(|v| v.split(&[' ', '(', '-'][..]).next().unwrap_or(""))
+							})
+							.unwrap_or("")
+							.to_string();
+					}
+					"fish" => {
+						let output = Command::new("fish")
+							.arg("--version")
+							.output()
+							.map_err(|e| errors::FreshfetchError::Command("fish --version".to_string(), e.to_string()))?;
+						
+						let stdout = String::from_utf8(output.stdout)
+							.map_err(|e| errors::FreshfetchError::General(format!("Invalid UTF8 from fish version: {}", e)))?;
+						
+						// Parse: "fish, version X.Y.Z"
+						version = stdout
+							.split("version ")
+							.nth(1)
+							.map(|v| v.trim())
+							.unwrap_or("")
+							.to_string();
+					}
+					"nu" | "nushell" => {
+						let output = Command::new(&name)
+							.arg("--version")
+							.output()
+							.map_err(|e| errors::FreshfetchError::Command(format!("{} --version", name), e.to_string()))?;
+						
+						version = String::from_utf8(output.stdout)
+							.map_err(|e| errors::FreshfetchError::General(format!("Invalid UTF8 from {} version: {}", name, e)))?
+							.trim()
+							.to_string();
+					}
 					_ => version = String::new(),
 				}
 			}
