@@ -25,7 +25,7 @@ impl PackageManager {
 	}
 }
 
-pub(crate) struct PackageManagers(Vec<PackageManager>);
+pub(crate) struct PackageManagers(pub Vec<PackageManager>);
 
 impl PackageManagers {
 	pub fn new(k: &Kernel) -> errors::Result<Self> {

@@ -23,6 +23,18 @@ impl fmt::Display for FreshfetchError {
 
 impl std::error::Error for FreshfetchError {}
 
+impl From<mlua::Error> for FreshfetchError {
+    fn from(err: mlua::Error) -> Self {
+        FreshfetchError::Lua(err.to_string())
+    }
+}
+
+impl From<std::io::Error> for FreshfetchError {
+    fn from(err: std::io::Error) -> Self {
+        FreshfetchError::Io("unknown".to_string(), err.to_string())
+    }
+}
+
 pub(crate) fn handle(err: &FreshfetchError) {
     eprintln!("\u{001b}[38;5;1mError.\u{001b}[0m\n{}", err);
     std::process::exit(1);
