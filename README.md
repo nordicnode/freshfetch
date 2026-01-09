@@ -9,7 +9,9 @@
 
 Freshfetch is a fast, customizable system information tool written in Rust.
 
-**This is a personal continuation of the original freshfetch project by [K4rakara](https://github.com/K4rakara/freshfetch), maintained by [nordicnode](https://github.com/nordicnode).**
+**This repository is a personal continuation of the original [freshfetch](https://github.com/K4rakara/freshfetch) project created by K4rakara.**
+**This unique version is maintained by [nordicnode](https://github.com/nordicnode).**
+
 It has been extensively modernized from the original codebase with new features, improved performance, and robust error handling.
 
 ## Features
