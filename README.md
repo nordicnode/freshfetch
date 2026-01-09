@@ -7,8 +7,10 @@
 <a href="https://github.com/k4rakara/freshfetch/releases"><img src="https://img.shields.io/github/v/release/K4rakara/freshfetch"></a>
 </p>
 
-Freshfetch is an alternative to [Neofetch](https://github.com/dylanaraps/neofetch)
-written in Rust with a focus on customization.
+Freshfetch is a continuation fork of the original [freshfetch](https://github.com/nordicnode/freshfetch)
+written in Rust with a focus on optimization, stability, and feature completeness. 
+This fork aims to modernize the codebase, fix legacy errors, and fill implementation gaps 
+while maintaining the core philosophy of deep customization.
 
 ## Features
 
