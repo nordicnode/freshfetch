@@ -1,4 +1,5 @@
 use crate::mlua;
+use crate::errors;
 
 use crate::misc;
 use crate::art;
@@ -18,27 +19,29 @@ pub(crate) struct Layout {
 }
 
 impl Layout {
-	pub fn new(args: &Arguments) -> Self {
-		let mut info = Info::new();
-		let art = Art::new(&mut info, &args);
+	pub fn new(args: &Arguments) -> errors::Result<Self> {
+		let mut info = Info::new()?;
+		let art = Art::new(&mut info, &args)?;
 		let terminal = Terminal::new();
-		Layout {
+		Ok(Layout {
 			art: art,
 			info: info,
 			terminal: terminal,
-		}
+		})
 	}
 }
 
 impl Inject for Layout {
-	fn prep(&mut self) {
-		self.info.prep();
-		self.art.prep();
-		self.terminal.prep();
+	fn prep(&mut self) -> errors::Result<()> {
+		self.info.prep()?;
+		self.art.prep()?;
+		self.terminal.prep()?;
+        Ok(())
 	}
-	fn inject(&self, lua: &mut Lua) {
-		self.art.inject(lua);
-		self.terminal.inject(lua);
-		self.info.inject(lua);
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
+		self.art.inject(lua)?;
+		self.terminal.inject(lua)?;
+		self.info.inject(lua)?;
+        Ok(())
 	}
 }

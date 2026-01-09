@@ -18,6 +18,7 @@ while maintaining the core philosophy of deep customization.
 - **Image support** via Kitty, Sixel, and iTerm2 protocols (using `viuer`)
 - **Fast** - optimized system info gathering with selective refreshes
 - **Portable** - no hardcoded paths, uses standard config directories
+- **Robust error handling** - graceful failures with informative error messages
 
 ## Requirements
 
@@ -59,7 +60,9 @@ freshfetch -a ubuntu        # Use Ubuntu's ASCII art
 - [x] Optimizations (selective sysinfo refresh, pure Rust distro detection)
 - [x] Documentation (improved codebase comments)
 - [x] Image support (via `viuer` integration)
+- [x] Robust error handling (Result-based propagation, no panics)
 - [ ] Add colorization for all distros (72/261 complete)
+- [ ] Unit and integration tests
 
 <p align="center">
 <img alt="An example configuration" src="./readme/config-1.png"/>

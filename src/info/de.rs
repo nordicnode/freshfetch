@@ -103,25 +103,13 @@ impl De {
 }
 
 impl Inject for De {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				match t.set("name", self.0.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
-				}
-				match t.set("version", self.1.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
-				}
-				match globals.set("de", t) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
-				}
-			}
-			Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("name", self.0.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("version", self.1.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("de", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

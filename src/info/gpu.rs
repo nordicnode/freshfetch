@@ -48,24 +48,10 @@ impl Gpus {
                         Ok(lscpi) => {
                             match String::from_utf8(lscpi.stdout) {
                                 Ok(v) => v,
-                                Err(e) => {
-                                    errors::handle(&format!("{}{cmd}{}{err}",
-                                        errors::CMD.0,
-                                        errors::CMD.1,
-                                        cmd = "lspci -mm",
-                                        err = format!("The output of the command contained invalid UTF8.\n{}", e)));
-                                    panic!();
-                                }
+                                Err(_) => return None,
                             }
                         }
-                        Err(e) => {
-                            errors::handle(&format!("{}{cmd}{}{err}",
-                                errors::CMD.0,
-                                errors::CMD.1,
-                                cmd = "lspci -mm",
-                                err = e));
-                            panic!();
-                        }
+                        Err(_) => return None,
                     }
                 };
 				let mut gpus = {
@@ -161,55 +147,18 @@ impl Gpus {
 }
 
 impl Inject for Gpus {
-    fn inject(&self, lua: &mut Lua) {
+    fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
         let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(a) => {
-				for (i, gpu) in self.0.iter().enumerate() {
-					match lua.create_table() {
-						Ok(t) => {
-							match t.set("name", gpu.name.as_str()) {
-								Ok(_) => (),
-								Err(e) => {
-									errors::handle(&format!("{}{}", errors::LUA, e));
-									panic!();
-								}
-							}
-							match t.set("brand", gpu.brand.as_str()) {
-								Ok(_) => (),
-								Err(e) => {
-									errors::handle(&format!("{}{}", errors::LUA, e));
-									panic!();
-								}
-							}
-							match a.raw_set((i + 1) as i64, t) {
-								Ok(_) => (),
-								Err(e) => {
-									errors::handle(&format!("{}{}", errors::LUA, e));
-									panic!();
-								}
-							}
-						}
-						Err(e) => {
-							errors::handle(&format!("{}{}", errors::LUA, e));
-							panic!();
-						}
-					}
-				}
-				match globals.set("gpus", a) {
-					Ok(_) => (),
-					Err(e) => {
-						errors::handle(&format!("{}{}", errors::LUA, e));
-						panic!();
-					}
-				}
-			}
-			Err(e) => {
-				errors::handle(&format!("{}{}", errors::LUA, e));
-				panic!();
-			}
-		}
+		let a = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        for (i, gpu) in self.0.iter().enumerate() {
+            let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            t.set("name", gpu.name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            t.set("brand", gpu.brand.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            a.raw_set((i + 1) as i64, t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        }
+        globals.set("gpus", a).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }
 

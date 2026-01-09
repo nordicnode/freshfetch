@@ -15,10 +15,8 @@ pub(crate) struct Kernel {
 }
 
 impl Kernel {
-	pub fn new() -> Self {
-		// TODO: Look into how `crate::uname::uname()` works and consider
-		// switching this to a `match { Ok(v) => v Err(e) => { ... } }`. 
-		let uname = uname().expect("Failed to run `crate::uname::uname()`.");
+	pub fn new() -> errors::Result<Self> {
+		let uname = uname().map_err(|e| errors::FreshfetchError::General(format!("Failed to run `uname()`: {}", e)))?;
 		let name;
 		match uname.sysname.as_str() {
 			"Darwin" => { name = String::from("Darwin"); }
@@ -35,44 +33,27 @@ impl Kernel {
 				else if other.ends_with("BSD") { name = String::from("BSD"); }
 				else if other.starts_with("CYGWIN") || other.starts_with("MSYS") || other.starts_with("MINGW") {name = String::from("Windows"); }
 				else {
-					errors::handle(&format!("Unexpected OS \"{os}\". Create a pull request or issue at https://github.com/K4rakara/freshfetch to add support for your OS.",
-						os = other));
-					panic!();
+					return Err(errors::FreshfetchError::General(format!("Unexpected OS \"{}\". Support needed.", other)));
 				}
 			}
 		}
-		Kernel {
+		Ok(Kernel {
 			name: name,
 			version: uname.release,
 			architecture: uname.machine,
-		}
+		})
 	}
 }
 
 impl Inject for Kernel {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				match t.set("name", self.name.as_str()) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-				}
-				match t.set("version", self.version.as_str()) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-				}
-				match t.set("architecture", self.architecture.as_str()) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-				}
-				match globals.set("kernel", t) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-				}
-			}
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("name", self.name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("version", self.version.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("architecture", self.architecture.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("kernel", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

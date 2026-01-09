@@ -49,14 +49,7 @@ impl Resolution {
                                 Ok(xrandr) => xrandr,
                                 Err(_) => return None,
                             },
-                            Err(e) => {
-                                errors::handle(&format!("{}{cmd}{}{err}\nNOTE: xrandr was found in the path, so this should have succeeded.\n",
-                                    errors::CMD.0,
-                                    errors::CMD.1,
-                                    cmd = "xrandr --nograb --current",
-                                    err = e));
-                                return None;
-                            } 
+                            Err(_) => return None 
                         }
                     };
 
@@ -132,14 +125,7 @@ impl Resolution {
                                 Ok(xwininfo) => xwininfo,
                                 Err(_) => return None, 
                             },
-                            Err(e) => {
-                                errors::handle(&format!("{}{cmd}{}{err}\nNOTE: xwininfo was found in the path, so this should have succeeded.\n",
-                                    errors::CMD.0,
-                                    errors::CMD.1,
-                                    cmd = "xwininfo -root",
-                                    err = e));
-                                return None;
-                            }
+                            Err(_) => return None
                         }
                     };
 
@@ -230,33 +216,17 @@ impl Resolution {
 }
 
 impl Inject for Resolution {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				match t.set("width", self.width) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-				match t.set("height", self.height) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-                match self.refresh {
-                    Some(refresh) => match t.set("refresh", refresh) {
-                        Ok(_) => (),
-                        Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-                    }
-                    None => (),
-                }
-				match globals.set("resolution", t) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("width", self.width).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("height", self.height).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        if let Some(refresh) = self.refresh {
+            t.set("refresh", refresh).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        }
+        globals.set("resolution", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }
 

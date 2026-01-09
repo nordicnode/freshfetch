@@ -123,31 +123,15 @@ impl Motherboard {
 }
 
 impl Inject for Motherboard {
-    fn inject(&self, lua: &mut Lua) {
-        match lua.create_table() {
-            Ok(t) => {
-                match t.set("name", self.name.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match t.set("vendor", self.vendor.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match t.set("revision", self.revision.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match lua.globals().set("motherboard", t) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-            }
-            Err(e) => {
-                errors::handle(&format!("{}{}", errors::LUA, e));
-                panic!();
-            }
-        }
+    fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
+        let globals = lua.globals();
+        
+        let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("name", self.name.clone()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("vendor", self.vendor.clone()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("revision", self.revision.clone()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("motherboard", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
     }
 }
 

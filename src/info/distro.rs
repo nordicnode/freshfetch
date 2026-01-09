@@ -113,30 +113,17 @@ impl Distro {
 }
 
 impl Inject for Distro {
-	fn inject(&self, lua: &mut Lua) {
-		self.colors.inject(lua);
-		let globals = lua.globals();
-		match lua.create_table() {
-				Ok(t) => {
-					match t.set("fullname", self.long_name.as_str()) {
-						Ok(_) => (),
-						Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-					}
-					match t.set("shortname", self.short_name.as_str()) {
-						Ok(_) => (),
-						Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-					}
-					match t.set("architecture", self.architecture.as_str()) {
-						Ok(_) => (),
-						Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-					}
-					match globals.set("distro", t) {
-						Ok(_) => (),
-						Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-					}
-				}
-				Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
+		{
+			let globals = lua.globals();
+			let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+			t.set("long_name", self.long_name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+			t.set("short_name", self.short_name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+			t.set("architecture", self.architecture.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+			globals.set("distro", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
 		}
+		self.colors.inject(lua)?;
+		Ok(())
 	}
 }
 
@@ -155,34 +142,16 @@ impl DistroColors {
 }
 
 impl Inject for DistroColors {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				match t.raw_insert(1, self.0.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-				match t.raw_insert(2, self.1.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-				match t.raw_insert(3, self.2.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-				match t.raw_insert(4, self.3.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-				match globals.set("distroColors", t) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-				}
-			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.raw_insert(1, self.0.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.raw_insert(2, self.1.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.raw_insert(3, self.2.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.raw_insert(4, self.3.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("distroColors", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }
 

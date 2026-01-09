@@ -1,19 +1,31 @@
-use std::process::{ exit };
+use std::fmt;
 
-pub(crate) static LUA: &'static str = "A Lua error occurred. Details:\n";
-pub(crate) static CMD: (&'static str, &'static str) =
-	( "An error occurred while executing \"", "\". Details:\n" );
-pub(crate) static PARSE: (&'static str, &'static str, &'static str) =
-	( "An error occurred while parsing \"", "\" into a \"", "\". Details:\n" );
+pub(crate) type Result<T> = std::result::Result<T, FreshfetchError>;
 
-pub(crate) mod io {
-	pub(crate) static READ: (&'static str, &'static str) =
-		( "An I/O error occurred while trying to read from \"", "\". Details:\n" );
+#[derive(Debug)]
+pub(crate) enum FreshfetchError {
+    Lua(String),
+    Command(String, String),
+    Parse(String, String, String),
+    Io(String, String),
+    General(String),
 }
 
-pub(crate) fn handle(msg: &str) {
-	println!("{header}{body}",
-		header = "\u{001b}[38;5;1mError.\u{001b}[0m\n",
-		body = msg);
-	exit(1);
+impl fmt::Display for FreshfetchError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FreshfetchError::Lua(details) => write!(f, "A Lua error occurred. Details:\n{}", details),
+            FreshfetchError::Command(cmd, details) => write!(f, "An error occurred while executing \"{}\". Details:\n{}", cmd, details),
+            FreshfetchError::Parse(input, target, details) => write!(f, "An error occurred while parsing \"{}\" into a \"{}\". Details:\n{}", input, target, details),
+            FreshfetchError::Io(path, details) => write!(f, "An I/O error occurred while trying to read from \"{}\". Details:\n{}", path, details),
+            FreshfetchError::General(details) => write!(f, "An error occurred: {}", details),
+        }
+    }
+}
+
+impl std::error::Error for FreshfetchError {}
+
+pub(crate) fn handle(err: &FreshfetchError) {
+    eprintln!("\u{001b}[38;5;1mError.\u{001b}[0m\n{}", err);
+    std::process::exit(1);
 }

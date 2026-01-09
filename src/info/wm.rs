@@ -60,38 +60,21 @@ impl Wm {
 				None
 			}
 		} else if env::var("DISPLAY").is_ok() && k.name != "macOS" && k.name != "Mac OS X" && k.name != "FreeMiNT" {
-			// TODO: Port this to rust using `x11rb` or a similar lib.
 			let try_output = Command::new("bash")
 				.arg("-c")
 				.arg(r#"id=$(xprop -root -notype _NET_SUPPORTING_WM_CHECK) && id=${id##* } && wm=$(xprop -id "$id" -notype -len 100 -f _NET_WM_NAME 8t) && wm=${wm/*WM_NAME = } && wm=${wm/\"} && wm=${wm/\"*} && printf $wm"#)
 				.output();
 			match try_output {
 				Ok(output) => {
-					let stdout = match String::from_utf8(output.stdout.clone()) {
-						Ok(v) => v,
-						Err(e) => {
-							errors::handle(&format!("{}{v:?}{}String{}{err}",
-								errors::PARSE.0,
-								errors::PARSE.1,
-								errors::PARSE.2,
-								v = output.stdout,
-								err = e));
-							panic!();
-						}
-					};
+					let stdout = String::from_utf8(output.stdout.clone()).unwrap_or_default();
 					if stdout != "" {
 						Some(Wm(stdout))
 					} else {
 						None
 					}
 				}
-				Err(e) => {
-					errors::handle(&format!("{}{cmd}{}{err}",
-						errors::CMD.0,
-						errors::CMD.1,
-						cmd = "...",
-						err = e));
-					panic!();
+				Err(_) => {
+					None
 				}
 			}
 		} else {
@@ -140,25 +123,19 @@ impl Wm {
 					match fs::read_dir("/proc/") {
 						Ok(dir) => {
 							for try_file in dir {
-								match try_file {
-									Ok(file) => {
-										match file.path().file_name() {
-											Some(v) => {
-												let name = v.to_string_lossy();
-												if name.contains("xaaes") || name.contains("xaloader") {
-													return Some(Wm(String::from("XaAES")));
-												} else if name.contains("myaes") {
-													return Some(Wm(String::from("MyAES")));
-												} else if name.contains("naes") {
-													return Some(Wm(String::from("N.AES")));
-												} else if name.contains("geneva") {
-													return Some(Wm(String::from("Geneva")));
-												}
-											}
-											None => (),
+								if let Ok(file) = try_file {
+									if let Some(v) = file.path().file_name() {
+										let name = v.to_string_lossy();
+										if name.contains("xaaes") || name.contains("xaloader") {
+											return Some(Wm(String::from("XaAES")));
+										} else if name.contains("myaes") {
+											return Some(Wm(String::from("MyAES")));
+										} else if name.contains("naes") {
+											return Some(Wm(String::from("N.AES")));
+										} else if name.contains("geneva") {
+											return Some(Wm(String::from("Geneva")));
 										}
 									}
-									Err(_) => (),
 								}
 							}
 							Some(Wm(String::from("Atari AES")))
@@ -173,10 +150,8 @@ impl Wm {
 }
 
 impl Inject for Wm {
-	fn inject(&self, lua: &mut Lua) {
-		match lua.globals().set("wm", self.0.as_str()) {
-			Ok(_) => (),
-			Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
-		}
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
+		lua.globals().set("wm", self.0.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

@@ -70,27 +70,27 @@ pub(crate) struct Info {
 }
 
 impl Info {
-	pub fn new() -> Self {
+	pub fn new() -> errors::Result<Self> {
 		{
 			let mut system = get_system();
 			system.refresh_cpu_usage();
 			system.refresh_memory();
 		}
-		let kernel = Kernel::new();
+		let kernel = Kernel::new()?;
 		let context = Context::new();
 		let distro = Distro::new(&kernel);
-		let uptime = Uptime::new(&kernel);
-		let package_managers = PackageManagers::new(&kernel);
-		let shell = Shell::new(&kernel);
+		let uptime = Uptime::new(&kernel)?;
+		let package_managers = PackageManagers::new(&kernel)?;
+		let shell = Shell::new(&kernel)?;
 		let resolution = Resolution::new(&kernel);
 		let de = De::new(&kernel, &distro);
 		let wm = Wm::new(&kernel);
 		let cpu = Cpu::new(&kernel);
 		let gpu = Gpus::new(&kernel);
 		let memory = Memory::new();
-    let motherboard = Motherboard::new(&kernel);
+        let motherboard = Motherboard::new(&kernel);
 		let host = Host::new(&kernel);
-    Info {
+        Ok(Info {
 			ctx: Lua::new(),
 			rendered: String::new(),
 			width: 0,
@@ -107,94 +107,69 @@ impl Info {
 			cpu: cpu,
 			gpu: gpu,
 			memory: memory,
-      motherboard,
+            motherboard,
 			host,
-		}
+		})
 	}
-	pub fn render(&mut self) {
-		match self.ctx.load(PRINT).exec() {
-			Ok(_) => (),
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-		}
-		match self.ctx.load(ANSI).exec() {
-			Ok(_) => (),
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-		}
+	pub fn render(&mut self) -> errors::Result<()> {
+		self.ctx.load(PRINT).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		self.ctx.load(ANSI).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+
 		let info = dirs::home_dir()
 			.unwrap_or_else(|| PathBuf::from("."))
 			.join(".config/freshfetch/info.lua");
 		if info.exists() {
-			match fs::read_to_string(&info) {
-				Ok(file) => {
-					match self.ctx.load(&file).exec() {
-						Ok(_) => (),
-						Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-					}
-					match self.ctx.globals().get::<&str, String>("__freshfetch__") {
-						Ok(v) => self.rendered = v,
-						Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-					}
-				}
-				Err(e) => {
-					errors::handle(&format!("{}{file:?}{}{err}",
-						errors::io::READ.0,
-						errors::io::READ.1,
-						file = info,
-						err = e));
-					panic!();
-				}
-			}
+			let file = fs::read_to_string(&info).map_err(|e| {
+                errors::FreshfetchError::Io(info.to_string_lossy().into_owned(), e.to_string())
+            })?;
+            
+            self.ctx.load(&file).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            
+            self.rendered = self.ctx.globals().get::<&str, String>("__freshfetch__").map_err(|e| {
+                errors::FreshfetchError::Lua(e.to_string())
+            })?;
 		} else {
-			match self.ctx.load(INFO).exec() {
-				Ok(_) => (),
-				Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-			}
-			match self.ctx.globals().get::<&str, String>("__freshfetch__") {
-				Ok(v) => self.rendered = v,
-				Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-			}
+			self.ctx.load(INFO).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            
+            self.rendered = self.ctx.globals().get::<&str, String>("__freshfetch__").map_err(|e| {
+                errors::FreshfetchError::Lua(e.to_string())
+            })?;
 		}
+        Ok(())
 	}
 }
 
 impl Inject for Info {
-	fn prep(&mut self) {
-		image::ImageManager::inject(&mut self.ctx);
-		match &self.context { Some(v) => v.inject(&mut self.ctx), None => (), }
-		self.kernel.inject(&mut self.ctx);
-		self.distro.inject(&mut self.ctx);
-		self.uptime.inject(&mut self.ctx);
-		self.package_managers.inject(&mut self.ctx);
-		self.shell.inject(&mut self.ctx);
-		match &self.resolution { Some(v) => v.inject(&mut self.ctx), None => (), }
-		match &self.wm { Some(v) => v.inject(&mut self.ctx), None => (), }
-		match &self.de { Some(v) => v.inject(&mut self.ctx), None => (), }
-		match &self.cpu { Some(v) => v.inject(&mut self.ctx), None => (), }
-		match &self.gpu { Some(v) => v.inject(&mut self.ctx), None => (), }
-		self.memory.inject(&mut self.ctx);
-    match &self.motherboard { Some(v) => v.inject(&mut self.ctx), None => (), }
-		match &self.host { Some(v) => v.inject(&mut self.ctx), None => (), }
-		self.render();
+	fn prep(&mut self) -> errors::Result<()> {
+		image::ImageManager::inject(&mut self.ctx)?;
+		if let Some(v) = &self.context { v.inject(&mut self.ctx)?; }
+		self.kernel.inject(&mut self.ctx)?;
+		self.distro.inject(&mut self.ctx)?;
+		self.uptime.inject(&mut self.ctx)?;
+		self.package_managers.inject(&mut self.ctx)?;
+		self.shell.inject(&mut self.ctx)?;
+		if let Some(v) = &self.resolution { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.wm { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.de { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.cpu { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.gpu { v.inject(&mut self.ctx)?; }
+		self.memory.inject(&mut self.ctx)?;
+        if let Some(v) = &self.motherboard { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.host { v.inject(&mut self.ctx)?; }
+		self.render()?;
 		{
 			let (w, h) = crate::utils::get_dimensions(&self.rendered);
 			self.width = w;
 			self.height = h;
 		}
+        Ok(())
 	}
-	fn inject(&self, lua: &mut Lua)  {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match globals.set("info", self.rendered.as_str()) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
-		match globals.set("infoWidth", self.width) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
-		match globals.set("infoHeight", self.height) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
+		globals.set("info", self.rendered.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		globals.set("infoWidth", self.width).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		globals.set("infoHeight", self.height).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

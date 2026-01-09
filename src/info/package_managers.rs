@@ -28,93 +28,55 @@ impl PackageManager {
 pub(crate) struct PackageManagers(Vec<PackageManager>);
 
 impl PackageManagers {
-	pub fn new(k: &Kernel) -> Self {
+	pub fn new(k: &Kernel) -> errors::Result<Self> {
 		let mut to_return = Vec::new();
 
 		let has_bin = |package_manager: &str| -> bool {
 			Path::new("/usr/bin/").join(package_manager).exists()
 		};
-		let mut add = |package_manager: &str, command: &str| {
-			to_return.push(PackageManager::new(package_manager, {
-				let try_output = Command::new("sh")
+        
+		let mut add = |package_manager: &str, command: &str| -> errors::Result<()> {
+			let packages = {
+				let output = Command::new("sh")
 					.arg("-c")
-					.arg(&format!(r#"{}"#, command))
-					.output();
-				match try_output {
-					Ok(output) => {
-						let stdout_string = String::from_utf8(output.stdout).expect(&format!(
-							"The output of \"{}\" contained invalid UTF8.",
-							command
-						));
-						let stdout_lines: Vec<&str> = stdout_string.split("\n").collect();
-						// 1 is subtracted because of the trailing
-						// newline that commands have.
-						stdout_lines.len() as i32 - 1
-					}
-					#[allow(non_fmt_panics)]
-					Err(e) => panic!(
-						"Failed to run \"{cmd}\" Details:\n{err}",
-						cmd = command,
-						err = e
-					),
-				}
-			}))
+					.arg(command)
+					.output()
+                    .map_err(|e| errors::FreshfetchError::Command(command.to_string(), e.to_string()))?;
+                    
+                let stdout_string = String::from_utf8(output.stdout)
+                    .map_err(|e| errors::FreshfetchError::General(format!("Invalid UTF8 from {}: {}", command, e)))?;
+                
+                let stdout_lines: Vec<&str> = stdout_string.trim().split("\n").collect();
+                if stdout_string.trim().is_empty() {
+                    0
+                } else {
+                    stdout_lines.len() as i32
+                }
+			};
+            to_return.push(PackageManager::new(package_manager, packages));
+            Ok(())
 		};
 
 		match k.name.as_str() {
 			"Linux" | "BSD" | "iPhone OS" | "Solaris" => {
-				if has_bin("kiss") {
-					add("kiss", "kiss l");
-				}
-				if has_bin("pacman") {
-					add("pacman", "pacman -Qq --color never");
-				}
-				if has_bin("dpkg") {
-					add("dpkg", "dpkg-query -f '.\n' -W");
-				}
-				if has_bin("rpm") {
-					add("rpm", "rpm -qa");
-				}
-				if has_bin("xbps-query") {
-					add("xbps-query", "xbps-query -l");
-				}
-				if has_bin("apk") {
-					add("apk", "apk info");
-				}
-				if has_bin("opkg") {
-					add("opkg", "opkg list-installed");
-				}
-				if has_bin("pacman-g2") {
-					add("pacman-g2", "pacman-g2 -Q");
-				}
-				if has_bin("lvu") {
-					add("lvu", "lvu installed");
-				}
-				if has_bin("tce-status") {
-					add("tce-status", "tce-status -i");
-				}
-				if has_bin("pkg-info") {
-					add("pkg-info", "pkg_info");
-				}
-				if has_bin("tazpkg") {
-					add("tazpkg", "tazpkg list");
-				}
-				if has_bin("sorcery") {
-					add("sorcery", "gaze installed");
-				}
-				if has_bin("alps") {
-					add("alps", "alps showinstalled");
-				}
-				if has_bin("butch") {
-					add("butch", "butch list");
-				}
-				if has_bin("mine") {
-					add("mine", "mine -q");
-				}
+				if has_bin("kiss") { add("kiss", "kiss l")?; }
+				if has_bin("pacman") { add("pacman", "pacman -Qq --color never")?; }
+				if has_bin("dpkg") { add("dpkg", "dpkg-query -f '.\n' -W")?; }
+				if has_bin("rpm") { add("rpm", "rpm -qa")?; }
+				if has_bin("xbps-query") { add("xbps-query", "xbps-query -l")?; }
+				if has_bin("apk") { add("apk", "apk info")?; }
+				if has_bin("opkg") { add("opkg", "opkg list-installed")?; }
+				if has_bin("pacman-g2") { add("pacman-g2", "pacman-g2 -Q")?; }
+				if has_bin("lvu") { add("lvu", "lvu installed")?; }
+				if has_bin("tce-status") { add("tce-status", "tce-status -i")?; }
+				if has_bin("pkg-info") { add("pkg-info", "pkg_info")?; }
+				if has_bin("tazpkg") { add("tazpkg", "tazpkg list")?; }
+				if has_bin("sorcery") { add("sorcery", "gaze installed")?; }
+				if has_bin("alps") { add("alps", "alps showinstalled")?; }
+				if has_bin("butch") { add("butch", "butch list")?; }
+				if has_bin("mine") { add("mine", "mine -q")?; }
 
-				if has_bin("flatpak") {
-					add("flatpak", "flatpak list");
-				}
+				if has_bin("flatpak") { add("flatpak", "flatpak list")?; }
 				if has_bin("snap") {
 					let daemon_running = {
 						let try_output = Command::new("sh")
@@ -127,48 +89,29 @@ impl PackageManagers {
 						}
 					};
 					if daemon_running {
-						add("snap", "snap list");
+						add("snap", "snap list")?;
 					}
 				}
 			}
 			_ => {}
 		}
 
-		PackageManagers(to_return)
+		Ok(PackageManagers(to_return))
 	}
 }
 
 impl Inject for PackageManagers {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				for (i, package_manager) in self.0.iter().enumerate() {
-					match lua.create_table() {
-						Ok(t2) => {
-							match t2.set("name", package_manager.name.as_str()) {
-								Ok(_) => (),
-								Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-							}
-							match t2.set("packages", package_manager.packages) {
-								Ok(_) => (),
-								Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-							}
-							match t.raw_insert(i as i64 + 1, t2) {
-								Ok(_) => (),
-								Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-							}
-						}
-						Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-					}
-				}
-				match globals.set("packageManagers", t) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-				}
-			}
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        for (i, package_manager) in self.0.iter().enumerate() {
+            let t2 = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            t2.set("name", package_manager.name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            t2.set("packages", package_manager.packages).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+            t.raw_insert(i as i64 + 1, t2).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        }
+        globals.set("packageManagers", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

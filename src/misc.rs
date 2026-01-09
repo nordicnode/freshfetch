@@ -23,25 +23,13 @@ impl Terminal {
 }
 
 impl Inject for Terminal {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
-		match lua.create_table() {
-			Ok(t) => {
-				match t.set("width", self.width) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
-				}
-				match t.set("height", self.height) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
-				}
-				match globals.set("terminal", t) {
-					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
-				}
-			}
-			Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("width", self.width).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("height", self.height).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("terminal", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }
 

@@ -26,7 +26,7 @@ pub(crate) struct Art {
 }
 
 impl Art {
-	pub fn new(info: &mut Info, arguments: &Arguments) -> Self {
+	pub fn new(info: &mut Info, arguments: &Arguments) -> errors::Result<Self> {
 		let mut to_return = Art {
 			inner: String::new(),
 			width: 0,
@@ -42,36 +42,21 @@ impl Art {
 						.unwrap_or_else(|| PathBuf::from("."))
 						.join(".config/freshfetch/art.lua");
 					if art.exists() {
-						match fs::read_to_string(art) {
-							Ok(file) => to_return.inner = {
-								let ctx = Lua::new();
-								match ctx.load(PRINT).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-								match ctx.load(ANSI).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-								match ctx.load(&file).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-								let value = ctx.globals().get::<&str, String>("__freshfetch__");
-								match value {
-									Ok(v) => v,
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-							},
-							Err(e) => {
-								errors::handle(&format!("{}{file}{}{err}",
-									errors::io::READ.0,
-									errors::io::READ.1,
-									file = "~/.config/freshfetch/art.lua",
-									err = e));
-								panic!();
-							}
-						}
+						let file = fs::read_to_string(&art).map_err(|e| {
+                            errors::FreshfetchError::Io(art.to_string_lossy().into_owned(), e.to_string())
+                        })?;
+                        
+                        to_return.inner = {
+                            let ctx = Lua::new();
+                            ctx.load(PRINT).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+                            ctx.load(ANSI).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+                            ctx.load(&file).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+                            
+                            let result = ctx.globals().get::<&str, String>("__freshfetch__").map_err(|e| {
+                                errors::FreshfetchError::Lua(e.to_string())
+                            })?;
+                            result
+                        };
 					} else {
 						let got = ascii_art::get(&info.distro.short_name);
 						to_return.inner = String::from(got.0);
@@ -95,29 +80,18 @@ impl Art {
 
 		to_return.logo = arguments.logo;
 
-		to_return
+		Ok(to_return)
 	}
 }
 
 impl Inject for Art {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match globals.set("art", self.inner.as_str()) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
-		match globals.set("artWidth", self.width) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
-		match globals.set("artHeight", self.height) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
-		match globals.set("logo", self.logo) {
-			Ok(_) => (),
-			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-		}
+		globals.set("art", self.inner.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		globals.set("artWidth", self.width).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		globals.set("artHeight", self.height).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+		globals.set("logo", self.logo).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }

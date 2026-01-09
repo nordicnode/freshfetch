@@ -10,7 +10,7 @@ pub(crate) struct ImageManager;
 impl ImageManager {
     /// Injects the `image(path)` function into the provided Lua environment.
     /// This allows layouts to render images directly in the terminal.
-    pub fn inject(lua: &mut Lua) {
+    pub fn inject(lua: &mut Lua) -> errors::Result<()> {
         let globals = lua.globals();
         
         let image_fn = lua.create_function(|_, path: String| {
@@ -19,19 +19,16 @@ impl ImageManager {
                 ..Default::default()
             };
             
-            // Note: This prints directly to stdout. 
-            // In freshfetch, we'll need to figure out how to integrate this 
-            // with the string-based rendering if we want perfect positioning.
-            // For now, it will print where the cursor is when called.
             match print_from_file(Path::new(&path), &config) {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    errors::handle(&format!("Failed to render image: {}", e));
-                    Ok(())
+                    // We return an error to Lua, which freshfetch will eventually catch
+                    Err(mlua::Error::RuntimeError(format!("Failed to render image: {}", e)))
                 }
             }
-        }).unwrap();
+        }).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
         
-        globals.set("image", image_fn).unwrap();
+        globals.set("image", image_fn).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
     }
 }

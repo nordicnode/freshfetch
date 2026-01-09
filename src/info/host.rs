@@ -54,20 +54,12 @@ impl Host {
 }
 
 impl Inject for Host {
-    fn inject(&self, lua: &mut Lua) {
+    fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
         let globals = lua.globals();
-        match lua.create_table() {
-            Ok(t) => {
-                match t.set("model", self.model.as_str()) {
-                    Ok(_) => (),
-                    Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-                }
-                match globals.set("host", t) {
-                    Ok(_) => (),
-                    Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-                }
-            }
-            Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
-        }
+        
+        let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("model", self.model.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("host", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
     }
 }

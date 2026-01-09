@@ -36,11 +36,17 @@ pub(crate) struct Arguments {
 }
 
 pub(crate) trait Inject {
-	fn prep(&mut self) {}
-	fn inject(&self, _lua: &mut Lua) {}
+	fn prep(&mut self) -> errors::Result<()> { Ok(()) }
+	fn inject(&self, _lua: &mut Lua) -> errors::Result<()> { Ok(()) }
 }
 
 fn main() {
+    if let Err(e) = run() {
+        errors::handle(&e);
+    }
+}
+
+fn run() -> errors::Result<()> {
 	let matches = Command::new("freshfetch")
 		.version("0.0.1")
 		.author("Jack Johannesen")
@@ -67,72 +73,42 @@ fn main() {
 	};
 
 	let mut ctx = Lua::new();
-	match ctx.load(PRINT).exec() {
-		Ok(_) => (),
-		Err(e) => {
-			errors::handle(&format!("{}{}", errors::LUA, e));
-			panic!();
-		}
-	}
-	match ctx.load(ANSI).exec() {
-		Ok(_) => (),
-		Err(e) => {
-			errors::handle(&format!("{}{}", errors::LUA, e));
-			panic!();
-		}
-	}
+    
+    // Set 'logo' global for Lua layouts
+    ctx.globals().set("logo", args.logo).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
 
-	let mut layout = Layout::new(&args);
-	layout.prep();
-	layout.inject(&mut ctx);
+	ctx.load(PRINT).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+	ctx.load(ANSI).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+
+	let mut layout = Layout::new(&args)?;
+	layout.prep()?;
+	layout.inject(&mut ctx)?;
 
 	let layout_file = dirs::home_dir()
 		.unwrap_or_else(|| PathBuf::from("."))
 		.join(".config/freshfetch/layout.lua");
 
 	if layout_file.exists() {
-		match read_to_string(&layout_file) {
-			Ok(v) => {
-				match ctx.load(&v).exec() {
-					Ok(_) => (),
-					Err(e) => {
-						errors::handle(&format!("{}{}", errors::LUA, e));
-						panic!();
-					}
-				}
-				match ctx.globals().get::<&str, String>("__freshfetch__") {
-					Ok(v) => print!("{}", v),
-					Err(e) => {
-						errors::handle(&format!("{}{}", errors::LUA, e));
-						panic!();
-					}
-				}
-			}
-			Err(e) => {
-				errors::handle(&format!(
-					"{}{file}{}{err}",
-					errors::io::READ.0,
-					errors::io::READ.1,
-					file = layout_file.to_string_lossy(),
-					err = e
-				));
-				panic!();
-			}
-		}
+		let v = read_to_string(&layout_file).map_err(|e| {
+            errors::FreshfetchError::Io(layout_file.to_string_lossy().into_owned(), e.to_string())
+        })?;
+        
+        ctx.load(&v).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        
+        let output = ctx.globals().get::<&str, String>("__freshfetch__").map_err(|e| {
+            errors::FreshfetchError::Lua(e.to_string())
+        })?;
+        
+        print!("{}", output);
 	} else {
-		match ctx.load(LAYOUT).exec() {
-			Ok(_) => (),
-			Err(e) => {
-				errors::handle(&format!("{}{}", errors::LUA, e));
-				panic!();
-			}
-		}
-		match ctx.globals().get::<&str, String>("__freshfetch__") {
-			Ok(v) => print!("{}", v),
-			Err(e) => {
-				errors::handle(&format!("{}{}", errors::LUA, e));
-				panic!();
-			}
-		}
+		ctx.load(LAYOUT).exec().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        
+        let output = ctx.globals().get::<&str, String>("__freshfetch__").map_err(|e| {
+            errors::FreshfetchError::Lua(e.to_string())
+        })?;
+        
+        print!("{}", output);
 	}
+    
+    Ok(())
 }

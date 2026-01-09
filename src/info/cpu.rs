@@ -77,18 +77,8 @@ impl Cpu {
 												bios_limit = bios_limit
 													.replace("\n", "")
 													.replace("\t", "");
-												match bios_limit.parse::<f32>() {
-													Ok(freq) => to_return = Some(freq / 1000.0),
-													Err(e) => {
-														errors::handle(&format!("{}{v}{}{type}{}{err}",
-															errors::PARSE.0,
-															errors::PARSE.1,
-															errors::PARSE.2,
-															v = bios_limit,
-															type = "f32",
-															err = e));
-														panic!();
-													}
+												if let Ok(freq) = bios_limit.parse::<f32>() {
+													to_return = Some(freq / 1000.0);
 												}
 											}
 											Err(_) => (),
@@ -105,19 +95,7 @@ impl Cpu {
 										|| line.starts_with("clock") {
 											let split: Vec<&str> = line.split(": ").collect();
 											let to_parse = String::from(split[1]).replace("MHz", "");
-											to_return = match to_parse.parse::<f32>() {
-												Ok(freq) => Some(freq / 1000.0),
-												Err(e) => {
-													errors::handle(&format!("{}{v}{}{type}{}{err}",
-														errors::PARSE.0,
-														errors::PARSE.1,
-														errors::PARSE.2,
-														v = to_parse,
-														type = "f32",
-														err = e));
-													panic!();
-												}
-											};
+											to_return = to_parse.parse::<f32>().ok().map(|f| f / 1000.0);
 											skip = true;
 										}
 									}
@@ -133,14 +111,7 @@ impl Cpu {
 							Some(to_return)
 						};
 					}
-					Err(e) => {
-						errors::handle(&format!("{}{file}{}{err}",
-							errors::io::READ.0,
-							errors::io::READ.1,
-							file = "/proc/cpuinfo",
-							err = e));
-						panic!();
-					}
+					Err(_) => { /* /proc/cpuinfo not readable, proceed without it */ }
 				}
 			}
 			_ => (),
@@ -207,33 +178,15 @@ impl Cpu {
 }
 
 impl Inject for Cpu {
-	fn inject(&self, lua: &mut Lua) {
+	fn inject(&self, lua: &mut Lua) -> errors::Result<()> {
 		let globals = lua.globals();
 
-		match lua.create_table() {
-			Ok(t) => {
-				match t.set("name", self.name.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
-				}
-				match t.set("fullName", self.full_name.as_str()) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
-				}
-				match t.set("cores", self.cores) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
-				}
-				match t.set("freq", self.freq) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
-				}
-				match globals.set("cpu", t) {
-					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
-				}
-			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-		}
+		let t = lua.create_table().map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("name", self.name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("fullName", self.full_name.as_str()).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("cores", self.cores).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        t.set("freq", self.freq).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        globals.set("cpu", t).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        Ok(())
 	}
 }
