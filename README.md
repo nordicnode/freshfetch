@@ -7,18 +7,43 @@
 <a href="https://github.com/k4rakara/freshfetch/releases"><img src="https://img.shields.io/github/v/release/K4rakara/freshfetch"></a>
 </p>
 
-Freshfetch is a continuation fork of the original [freshfetch](https://github.com/nordicnode/freshfetch)
-written in Rust with a focus on optimization, stability, and feature completeness. 
-This fork aims to modernize the codebase, fix legacy errors, and fill implementation gaps 
-while maintaining the core philosophy of deep customization.
+Freshfetch is a fast, customizable system information tool written in Rust.
+Originally forked from [freshfetch](https://github.com/K4rakara/freshfetch), this version has been
+extensively modernized with new features, improved performance, and robust error handling.
 
 ## Features
 
-- **Fully customizable** via Lua scripting (`layout.lua`, `info.lua`, `art.lua`)
-- **Image support** via Kitty, Sixel, and iTerm2 protocols (using `viuer`)
-- **Fast** - optimized system info gathering with selective refreshes
-- **Portable** - no hardcoded paths, uses standard config directories
-- **Robust error handling** - graceful failures with informative error messages
+### System Information
+- **User & Host** - Username and hostname
+- **OS** - Distribution name and architecture
+- **Host** - System model/product name
+- **Kernel** - Linux kernel version
+- **Uptime** - System uptime in days/hours/minutes
+- **Packages** - Package counts from dpkg, rpm, pacman, flatpak, snap, etc.
+- **Shell** - Current shell and version
+- **Resolution** - Display resolution and refresh rate
+- **DE** - Desktop environment and version (Cinnamon, GNOME, KDE, etc.)
+- **WM** - Window manager (Mutter, KWin, i3, etc.)
+- **CPU** - Processor name, cores, and frequency
+- **GPU** - Graphics card(s) with brand detection
+- **Board** - Motherboard vendor and model
+- **Memory** - RAM usage
+- **Battery** - Capacity and status (laptops only)
+- **Disk** - Root partition usage
+- **Network** - Active interface and local IP
+
+### Customization
+- **Lua scripting** - Full control via `layout.lua`, `info.lua`, `art.lua`
+- **Image support** - Kitty, Sixel, and iTerm2 protocols (via `viuer`)
+- **Custom ASCII art** - 261+ distro logos or your own art
+- **Distro colors** - Automatic color theming per distribution
+
+### Technical
+- **Parallel info gathering** - Uses `rayon` for concurrent system info collection
+- **Pure Rust** - No shell-outs for distro detection
+- **Portable paths** - Uses `dirs` crate, no hardcoded `/home/` paths
+- **Robust error handling** - `Result`-based propagation, no panics
+- **Modern dependencies** - `mlua` 0.9, `sysinfo` 0.30, `clap` 4.x
 
 ## Requirements
 
@@ -29,22 +54,22 @@ while maintaining the core philosophy of deep customization.
 
 #### Arch Linux
 
-On Arch Linux, you can install one of three AUR packages:
+On Arch Linux, you can install from the AUR:
 
-- `freshfetch-git` -- The bleeding-edge version of freshfetch that builds from the master branch.
-- `freshfetch-bin` -- The stable version of freshfetch that you just install. No compile required.
-- `freshfetch` -- Currently not set up right, will be fixed with the next release. Once set up, It'll build the latest stable version from source.
+```bash
+yay -S freshfetch-git    # Bleeding-edge from master
+yay -S freshfetch-bin    # Pre-built stable release
+```
 
 #### Other distros
 
-With other distributions, you can either install the [latest `tar.gz` build](https://github.com/K4rakara/freshfetch/releases) or build from source.
+Build from source:
 
-###### Build from source
-
-To compile Freshfetch, just run `cargo build --release -vv`. This will build the executable for your platform. Then, run these commands:
 ```bash
+git clone https://github.com/nordicnode/freshfetch.git
+cd freshfetch
+cargo build --release
 sudo cp ./target/release/freshfetch /usr/bin/
-sudo chmod 755 /usr/bin/freshfetch
 ```
 
 ## Usage
@@ -55,14 +80,31 @@ freshfetch --logo           # Display only ASCII art
 freshfetch -a ubuntu        # Use Ubuntu's ASCII art
 ```
 
+## Configuration
+
+Create custom layouts in `~/.config/freshfetch/`:
+
+- `layout.lua` - Main layout combining art and info
+- `info.lua` - System information display
+- `art.lua` - Custom ASCII art
+
+## Recent Changes
+
+### v0.2.0 (2026)
+- **New info modules**: Battery, Disk, Network
+- **Parallel gathering**: Concurrent info collection with rayon
+- **mlua upgrade**: 0.6.6 → 0.9.9 for Rust compatibility
+- **Code quality**: 99 clippy warnings → 9
+- **Error handling**: Complete refactor to `Result`-based propagation
+- **Dependencies**: Updated clap 4.x, sysinfo 0.30, chrono 0.4.31
+- **Removed**: `cmd_lib` dependency (pure Rust distro detection)
+- **Portable paths**: Uses `dirs` crate instead of hardcoded paths
+
 ## Todo
 
-- [x] Optimizations (selective sysinfo refresh, pure Rust distro detection)
-- [x] Documentation (improved codebase comments)
-- [x] Image support (via `viuer` integration)
-- [x] Robust error handling (Result-based propagation, no panics)
 - [ ] Add colorization for all distros (72/261 complete)
 - [ ] Unit and integration tests
+- [ ] macOS support
 
 <p align="center">
 <img alt="An example configuration" src="./readme/config-1.png"/>
