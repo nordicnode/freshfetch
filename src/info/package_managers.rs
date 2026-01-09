@@ -52,11 +52,11 @@ impl PackageManagers {
 						stdout_lines.len() as i32 - 1
 					}
 					#[allow(non_fmt_panics)]
-					Err(e) => panic!(format!(
+					Err(e) => panic!(
 						"Failed to run \"{cmd}\" Details:\n{err}",
 						cmd = command,
 						err = e
-					)),
+					),
 				}
 			}))
 		};

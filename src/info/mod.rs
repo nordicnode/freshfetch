@@ -20,12 +20,13 @@ pub(crate) mod gpu;
 pub(crate) mod memory;
 pub(crate) mod motherboard;
 pub(crate) mod host;
+pub(crate) mod image;
 
 use std::fs;
-use std::path::{ Path };
+use std::path::{ Path, PathBuf };
 
-use regex::{ Regex };
-use sysinfo::{ SystemExt };
+
+use sysinfo::{ System };
 use mlua::prelude::*;
 
 use crate::{ Inject };
@@ -70,7 +71,11 @@ pub(crate) struct Info {
 
 impl Info {
 	pub fn new() -> Self {
-		get_system().refresh_all();
+		{
+			let mut system = get_system();
+			system.refresh_cpu_usage();
+			system.refresh_memory();
+		}
 		let kernel = Kernel::new();
 		let context = Context::new();
 		let distro = Distro::new(&kernel);
@@ -115,13 +120,8 @@ impl Info {
 			Ok(_) => (),
 			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
 		}
-		let info = Path::new("/home/")
-			.join(self.context.clone()
-				.unwrap_or(Context {
-					user: String::new(),
-					host: String::new(),
-				})
-				.user)
+		let info = dirs::home_dir()
+			.unwrap_or_else(|| PathBuf::from("."))
 			.join(".config/freshfetch/info.lua");
 		if info.exists() {
 			match fs::read_to_string(&info) {
@@ -159,6 +159,7 @@ impl Info {
 
 impl Inject for Info {
 	fn prep(&mut self) {
+		image::ImageManager::inject(&mut self.ctx);
 		match &self.context { Some(v) => v.inject(&mut self.ctx), None => (), }
 		self.kernel.inject(&mut self.ctx);
 		self.distro.inject(&mut self.ctx);
@@ -175,24 +176,9 @@ impl Inject for Info {
 		match &self.host { Some(v) => v.inject(&mut self.ctx), None => (), }
 		self.render();
 		{
-			let plaintext = {
-				let regex = Regex::new(r#"(?i)\[(?:[\d;]*\d+[a-z])"#).unwrap();
-				String::from(regex.replace_all(&self.rendered, ""))
-			};
-
-			let mut w = 0usize;
-			let mut h = 0usize;
-			
-			for line in plaintext.split("\n").collect::<Vec<&str>>() {
-				{
-					let len = line.chars().collect::<Vec<char>>().len();
-					if len > w { w = len; }
-				}
-				h += 1;
-			}
-
-			self.width = w as i32;
-			self.height = h as i32;
+			let (w, h) = crate::utils::get_dimensions(&self.rendered);
+			self.width = w;
+			self.height = h;
 		}
 	}
 	fn inject(&self, lua: &mut Lua)  {

@@ -9,10 +9,9 @@ use info::distro;
 
 use std::fs;
 use std::env;
-use std::path::{ Path };
+use std::path::{ Path, PathBuf };
 
 use mlua::prelude::*;
-use regex::{ Regex };
 
 use crate::{ Inject, Arguments };
 use info::{ Info };
@@ -23,6 +22,7 @@ pub(crate) struct Art {
 	inner: String,
 	width: i32,
 	height: i32,
+	logo: bool,
 }
 
 impl Art {
@@ -31,14 +31,15 @@ impl Art {
 			inner: String::new(),
 			width: 0,
 			height: 0,
+			logo: false,
 		};
 
 		// Get inner & distro colors.
 		{
 			match arguments.ascii_distro.clone() {
 				None => {
-					let art = Path::new("/home/")
-						.join(env::var("USER").unwrap_or(String::new()))
+					let art = dirs::home_dir()
+						.unwrap_or_else(|| PathBuf::from("."))
 						.join(".config/freshfetch/art.lua");
 					if art.exists() {
 						match fs::read_to_string(art) {
@@ -87,25 +88,12 @@ impl Art {
 
 		// Get width and height
 		{
-			let plaintext = {
-				let regex = Regex::new(r#"(?i)\[(?:[\d;]*\d+[a-z])"#).unwrap();
-				String::from(regex.replace_all(&to_return.inner, ""))
-			};
-
-			let mut w = 0usize;
-			let mut h = 0usize;
-			
-			for line in plaintext.split("\n").collect::<Vec<&str>>() {
-				{
-					let len = line.chars().collect::<Vec<char>>().len();
-					if len > w { w = len; }
-				}
-				h += 1;
-			}
-
-			to_return.width = w as i32;
-			to_return.height = h as i32;
+			let (w, h) = crate::utils::get_dimensions(&to_return.inner);
+			to_return.width = w;
+			to_return.height = h;
 		}
+
+		to_return.logo = arguments.logo;
 
 		to_return
 	}
@@ -124,6 +112,10 @@ impl Inject for Art {
 			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
 		}
 		match globals.set("artHeight", self.height) {
+			Ok(_) => (),
+			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
+		}
+		match globals.set("logo", self.logo) {
 			Ok(_) => (),
 			Err(e) => errors::handle(&format!("{}{}", errors::LUA, e)),
 		}

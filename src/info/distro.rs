@@ -1,5 +1,5 @@
-use crate::cmd_lib;
 use crate::mlua;
+use crate::regex::Regex;
 
 use crate::errors;
 use super::kernel;
@@ -10,7 +10,8 @@ use std::path::{ Path };
 use std::process::{ Command, Stdio };
 
 use mlua::prelude::*;
-use cmd_lib::{ run_fun };
+
+
 
 use crate::{ Inject };
 use kernel::{ Kernel };
@@ -40,43 +41,64 @@ impl Distro {
 				// Red Star OS
 				else if Path::new("/etc/redstar-release").exists() {
 					long_name = {
-						// TODO: Rework this into rust.
-						let to_return;
-						let release = run_fun!(printf "Red Star OS $(awk -F'[^0-9*]' '$0=$2' /etc/redstar-release)");
-						if release.is_err() { to_return = String::from("Red Star OS"); }
-						else { to_return = release.unwrap(); }
+						let mut to_return = String::from("Red Star OS");
+						if let Ok(release) = fs::read_to_string("/etc/redstar-release") {
+							let re = Regex::new(r#"[^0-9]*([0-9.]+).*"#).unwrap();
+							if let Some(caps) = re.captures(&release) {
+								if let Some(m) = caps.get(1) {
+									to_return = format!("Red Star OS {}", m.as_str());
+								}
+							}
+						}
 						to_return
 					};
 					short_name = String::from("Red Star OS");
 				}
 				// Generic
-				else if Path::new("/etc/os-release").exists()
-				|| Path::new("/usr/share/os-release").exists()
-				|| Path::new("/etc/openwrt_release").exists()
-				|| Path::new("/etc/lsb-release").exists() {
-					let (long, short) = {
-						// TODO: Rework this into pure rust.
-						let try_release = Command::new("sh")
-							.arg("-c")
-							.arg(r#"for file in /etc/lsb-release /usr/lib/os-release /etc/os-release /etc/openwrt_release; do [[ -f $file ]] && source $file && break; done; echo ${PRETTY_NAME:-${DISTRIB_DESCRIPTION}} ${VERSION_ID:-${DISTRIB_RELEASE}}; echo ${PRETTY_NAME:-${DISTRIB_DESCRIPTION:-${DISTRIB_ID:-${TAILS_PRODUCT_NAME}}}};"#)
-							.stdout(Stdio::piped())
-							.output();
-						if try_release.is_ok() {
-							let release = String::from_utf8(try_release.unwrap().stdout).expect("");
-							let lines: Vec<&str> = release.split("\n").collect();
-						 	if lines.len() == 1 {
-								(String::from(lines[0]), k.name.clone())
-							} else if lines.len() >= 2 {
-								(String::from(lines[0]), String::from(lines[1]))
-							} else {
-								(k.name.clone(), k.name.clone())
+				else {
+					let files = [
+						"/etc/lsb-release",
+						"/usr/lib/os-release",
+						"/etc/os-release",
+						"/etc/openwrt_release",
+					];
+					let mut found = false;
+					for file in files.iter() {
+						if let Ok(content) = fs::read_to_string(file) {
+							let mut vars = std::collections::HashMap::new();
+							for line in content.lines() {
+								let split: Vec<&str> = line.splitn(2, '=').collect();
+								if split.len() == 2 {
+									let key = split[0].trim();
+									let value = split[1].trim().trim_matches('"').trim_matches('\'');
+									vars.insert(key, value);
+								}
 							}
-						} else {
-							(k.name.clone(), k.name.clone())
+							
+							let pretty_name = vars.get("PRETTY_NAME")
+								.or_else(|| vars.get("DISTRIB_DESCRIPTION"))
+								.or_else(|| vars.get("DISTRIB_ID"))
+								.or_else(|| vars.get("TAILS_PRODUCT_NAME"));
+							
+							let version_id = vars.get("VERSION_ID")
+								.or_else(|| vars.get("DISTRIB_RELEASE"));
+							
+							if let Some(name) = pretty_name {
+								if let Some(ver) = version_id {
+									long_name = format!("{} {}", name, ver);
+								} else {
+									long_name = String::from(*name);
+								}
+								short_name = String::from(*name);
+								found = true;
+								break;
+							}
 						}
-					};
-					long_name = long;
-					short_name = short;
+					}
+					if !found {
+						long_name = k.name.clone();
+						short_name = k.name.clone();
+					}
 				}
 			}
 			_ => {} // Do nothing, unknown OS'es should have already exited by now.

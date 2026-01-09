@@ -27,7 +27,7 @@ impl Shell {
 					Path::new(&match env::var("SHELL") {
 						Ok(v) => v,
 						#[allow(non_fmt_panics)]
-						Err(e) => panic!(format!("Failed to get $SHELL. Details:\n{}", e)),
+						Err(e) => panic!("Failed to get $SHELL. Details:\n{}", e),
 					})
 					.file_name()
 					.expect("$SHELL is invalid!")

@@ -1,8 +1,8 @@
 use crate::sysinfo;
 
 use std::sync::{ Mutex, MutexGuard };
-
-use sysinfo::{ System, SystemExt, ProcessExt };
+use regex::{ Regex };
+use sysinfo::{ System };
 
 lazy_static! {
 	static ref SYSTEM: Mutex<System> = Mutex::new(System::new());

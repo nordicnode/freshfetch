@@ -2,13 +2,14 @@
 pub(crate) extern crate lazy_static;
 pub(crate) extern crate chrono;
 pub(crate) extern crate clap;
-pub(crate) extern crate cmd_lib;
+
 pub(crate) extern crate mlua;
 pub(crate) extern crate regex;
 pub(crate) extern crate sysinfo;
 pub(crate) extern crate term_size;
 pub(crate) extern crate uname;
 pub(crate) extern crate users;
+pub(crate) extern crate dirs;
 
 pub(crate) mod art;
 pub(crate) mod assets;
@@ -18,7 +19,7 @@ pub(crate) mod layout;
 pub(crate) mod misc;
 pub(crate) mod utils;
 
-use clap::{App, Arg};
+use clap::{Command, Arg};
 use mlua::prelude::*;
 
 use assets::defaults::LAYOUT;
@@ -27,10 +28,11 @@ use layout::Layout;
 
 use std::env::var;
 use std::fs::read_to_string;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub(crate) struct Arguments {
 	pub ascii_distro: Option<String>,
+	pub logo: bool,
 }
 
 pub(crate) trait Inject {
@@ -39,32 +41,29 @@ pub(crate) trait Inject {
 }
 
 fn main() {
-	let app = App::new("freshfetch")
+	let matches = Command::new("freshfetch")
 		.version("0.0.1")
 		.author("Jack Johannesen")
 		.about("A fresh take on neofetch.")
-		.help(HELP)
+		.override_help(HELP)
 		.arg(
-			Arg::with_name("ascii_distro")
+			Arg::new("ascii_distro")
 				.long("ascii_distro")
-				.short("a")
-				.takes_value(true)
+				.short('a')
+				.num_args(1)
 				.value_name("ASCII_DISTRO"),
 		)
 		.arg(
-			Arg::with_name("logo")
+			Arg::new("logo")
 				.long("logo")
-				.short("l")
-				.takes_value(false),
-		);
-
-	let matches = app.get_matches();
+				.short('l')
+				.action(clap::ArgAction::SetTrue),
+		)
+		.get_matches();
 
 	let args = Arguments {
-		ascii_distro: match matches.value_of("ascii_distro") {
-			Some(v) => Some(String::from(v)),
-			None => None,
-		},
+		ascii_distro: matches.get_one::<String>("ascii_distro").cloned(),
+		logo: matches.get_flag("logo"),
 	};
 
 	let mut ctx = Lua::new();
@@ -87,8 +86,8 @@ fn main() {
 	layout.prep();
 	layout.inject(&mut ctx);
 
-	let layout_file = Path::new("/home/")
-		.join(var("USER").unwrap_or(String::new()))
+	let layout_file = dirs::home_dir()
+		.unwrap_or_else(|| PathBuf::from("."))
 		.join(".config/freshfetch/layout.lua");
 
 	if layout_file.exists() {

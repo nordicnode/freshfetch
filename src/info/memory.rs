@@ -5,7 +5,7 @@ use super::utils;
 use crate::errors;
 
 use mlua::prelude::*;
-use sysinfo::{ SystemExt };
+use sysinfo::{ System };
 
 use crate::{ Inject };
 use utils::{ get_system };

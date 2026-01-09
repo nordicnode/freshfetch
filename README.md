@@ -10,17 +10,17 @@
 Freshfetch is an alternative to [Neofetch](https://github.com/dylanaraps/neofetch)
 written in Rust with a focus on customization.
 
-## Warning:
-Freshfetch is not to a "completed" state yet. Right now, it's in a "beta" of
-sorts, with a lot of room for optimization and improvement. If you run into any
-problems, be sure to file an issue so that it can be fixed!
+## Features
 
-## Todo:
+- **Fully customizable** via Lua scripting (`layout.lua`, `info.lua`, `art.lua`)
+- **Image support** via Kitty, Sixel, and iTerm2 protocols (using `viuer`)
+- **Fast** - optimized system info gathering with selective refreshes
+- **Portable** - no hardcoded paths, uses standard config directories
 
- - Optimizations galore
- - Documentation :sweat:
- - Support for images
- - Add colorization for all distros (69/261 complete)
+## Requirements
+
+- Rust 2021 Edition (1.56+)
+- Linux, BSD, or MINIX
 
 ## Installation
 
@@ -44,9 +44,23 @@ sudo cp ./target/release/freshfetch /usr/bin/
 sudo chmod 755 /usr/bin/freshfetch
 ```
 
+## Usage
+
+```bash
+freshfetch                  # Display system info with ASCII art
+freshfetch --logo           # Display only ASCII art
+freshfetch -a ubuntu        # Use Ubuntu's ASCII art
+```
+
+## Todo
+
+- [x] Optimizations (selective sysinfo refresh, pure Rust distro detection)
+- [x] Documentation (improved codebase comments)
+- [x] Image support (via `viuer` integration)
+- [ ] Add colorization for all distros (72/261 complete)
+
 <p align="center">
 <img alt="An example configuration" src="./readme/config-1.png"/>
 <img alt="An example configuration" src="./readme/config-2.png"/>
 <img alt="An example configuration" src="./readme/config-3.png"/>
 </p>
-

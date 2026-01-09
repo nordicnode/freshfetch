@@ -1,4 +1,4 @@
-use crate::cmd_lib;
+
 use crate::mlua;
 
 use crate::errors;
@@ -6,9 +6,10 @@ use super::kernel;
 use super::distro;
 
 use std::env;
+use std::process::Command;
 
 use mlua::prelude::*;
-use cmd_lib::{ run_fun };
+
 
 use crate::{ Inject };
 use kernel::{ Kernel };
@@ -67,40 +68,31 @@ impl De {
 				// In neofetch, this uses a Bash switch statement, but because 
 				// Bash switch statements let you do patterns, we can't use a 
 				// switch statement here.
+				let get_version = |cmd: &str, args: &[&str]| -> String {
+					Command::new(cmd)
+						.args(args)
+						.output()
+						.map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+						.unwrap_or_default()
+				};
+
 				if to_return.0.starts_with("Plasma") {
-					to_return.1 = run_fun!( plasmashell --version )
-						.ok()
-						.unwrap_or(String::new())
-						.replace("plasmashell ", "")
-						.replace("\n", "");
+					to_return.1 = get_version("plasmashell", &["--version"])
+						.replace("plasmashell ", "");
 				} else if to_return.0.starts_with("MATE") {
-					to_return.1 = run_fun!( mate-session --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("mate-session", &["--version"]);
 				} else if to_return.0.starts_with("Xfce") {
-					to_return.1 = run_fun!( xfce4-session --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("xfce4-session", &["--version"]);
 				} else if to_return.0.starts_with("GNOME") {
-					to_return.1 = run_fun!( gnome-shell --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("gnome-shell", &["--version"]);
 				} else if to_return.0.starts_with("Cinnamon") {
-					to_return.1 = run_fun!( cinnamon --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("cinnamon", &["--version"]);
 				} else if to_return.0.starts_with("Budgie") {
-					to_return.1 = run_fun!( budgie-desktop --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("budgie-desktop", &["--version"]);
 				} else if to_return.0.starts_with("LXQt") {
-					to_return.1 = run_fun!( lxqt-session --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("lxqt-session", &["--version"]);
 				} else if to_return.0.starts_with("Unity") {
-					to_return.1 = run_fun!( unity --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = get_version("unity", &["--version"]);
 				}
 			}
 			Some(to_return)

@@ -10,7 +10,7 @@ use std::path::{ Path };
 
 use mlua::prelude::*;
 use chrono::{ Utc, DateTime, Datelike, Timelike, TimeZone };
-use sysinfo::{ SystemExt };
+use sysinfo::{ System };
 
 use crate::{ Inject };
 use kernel::{ Kernel };
@@ -27,12 +27,12 @@ impl Uptime {
 				// from /proc/uptime, we should check that it exists and have a
 				// fallback.
 				if Path::new("/proc/uptime").exists() {
-					uptime_seconds = get_system().uptime() as i64;
+					uptime_seconds = System::uptime() as i64;
 				} else {
 					// `crate::sysinfo::SystemExt::get_boot_time()` doesn't
 					// appear to rely on /proc/uptime, so we should be able to 
 					// use it here.
-					let boot_time = get_system().boot_time() as i64;
+					let boot_time = System::boot_time() as i64;
 					let now_time = Utc::now().timestamp();
 					uptime_seconds = boot_time - now_time;
 				}
@@ -41,7 +41,7 @@ impl Uptime {
 			// to satisfy the compiler.
 			_ => { uptime_seconds = 0; }
 		}
-		Uptime(Utc.timestamp(uptime_seconds, 0))
+		Uptime(Utc.timestamp_opt(uptime_seconds, 0).unwrap())
 	}
 }
 
