@@ -110,14 +110,14 @@ impl Info {
 			),
 			|| rayon::join(
 				|| Host::new(&kernel),
-				|| Battery::new(),
+				Battery::new,
 			),
 		);
 		
 		let ((disk, network), memory) = rayon::join(
 			|| rayon::join(
-				|| Disk::new(),
-				|| Network::new(),
+				Disk::new,
+				Network::new,
 			),
 			Memory::new,
 		);

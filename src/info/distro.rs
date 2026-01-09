@@ -156,20 +156,20 @@ impl Inject for DistroColors {
 
 impl From<[Option<&'static str>; 4]> for DistroColors {
 	fn from(v: [Option<&'static str>; 4]) -> Self {
-		let mut _1 = String::from(v[0].unwrap_or("white"));
-		let mut _2 = String::from(v[1]
+		let color1 = String::from(v[0].unwrap_or("white"));
+		let mut color2 = String::from(v[1]
 			.unwrap_or(v[0]
 				.unwrap_or("\u{001b}[38;5;7m")));
-		let mut _3 = String::from(v[2]
+		let color3 = String::from(v[2]
 			.unwrap_or(v[1]
 				.unwrap_or(v[0]
 					.unwrap_or("\u{001b}[38;5;7m"))));
-		let mut _4 = String::from(
+		let color4 = String::from(
 			v[3].unwrap_or(
 				v[2].unwrap_or(v[1]
 					.unwrap_or(v[0]
 						.unwrap_or("\u{001b}[38;5;7m")))));
-		if _2 == "\u{001b}[38;5;7m" { _2 = _1.clone(); }
-		DistroColors ( _1, _2, _3, _4 )
+		if color2 == "\u{001b}[38;5;7m" { color2 = color1.clone(); }
+		DistroColors ( color1, color2, color3, color4 )
 	}
 }

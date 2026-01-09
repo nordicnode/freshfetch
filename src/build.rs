@@ -21,7 +21,7 @@ fn get_buildlist(base: &Path) -> BuildList {
 		let mut to_return = Vec::new();
 		for line in split.iter() {
 			if !line.starts_with("#") {
-				to_return.push(line.clone());
+				to_return.push(*line);
 			}
 		}
 		to_return

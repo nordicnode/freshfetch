@@ -111,14 +111,11 @@ impl Cpu {
 			}
 			_ => (),
 		}
-		if name.is_some()
-		&& freq.is_some()
-		&& cores.is_some() {
+		if let (Some(name_val), Some(freq_val), Some(cores_val)) = (name, freq, cores) {
 			Some(Cpu {
 				name: {
-					let mut to_return = name
+					let mut to_return = name_val
 						.clone()
-						.unwrap()
 						.replace("(tm)", "")
 						.replace("(TM)", "")
 						.replace("(R)", "")
@@ -162,9 +159,9 @@ impl Cpu {
 					to_return = String::from(to_return.trim());
 					to_return
 				},
-				full_name: name.clone().unwrap(),
-				freq: freq.unwrap(),
-				cores: cores.unwrap(),
+				full_name: name_val,
+				freq: freq_val,
+				cores: cores_val,
 			})
 		} else {
 			None

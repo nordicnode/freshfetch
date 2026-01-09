@@ -180,15 +180,14 @@ impl Resolution {
                                     let line_split = line
                                         .split("x")
                                         .collect::<Vec<&str>>();
-                                    let width = line_split.first();
-                                    let height = line_split.get(1);
-                                    if width.is_some()
-                                    && height.is_some() {
-                                        return Some(Resolution {
-                                            width: width.unwrap().parse::<u16>().unwrap(),
-                                            height: height.unwrap().parse::<u16>().unwrap(),
-                                            refresh: None,
-                                        });
+                                    if let (Some(w), Some(h)) = (line_split.first(), line_split.get(1)) {
+                                        if let (Ok(width), Ok(height)) = (w.parse::<u16>(), h.parse::<u16>()) {
+                                            return Some(Resolution {
+                                                width,
+                                                height,
+                                                refresh: None,
+                                            });
+                                        }
                                     }
                                 }
                             }
