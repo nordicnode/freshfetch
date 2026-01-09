@@ -94,7 +94,7 @@ Create custom layouts in `~/.config/freshfetch/`:
 - **New info modules**: Battery, Disk, Network
 - **Parallel gathering**: Concurrent info collection with rayon
 - **mlua upgrade**: 0.6.6 → 0.9.9 for Rust compatibility
-- **Code quality**: 99 clippy warnings → 9
+- **Code quality**: Resolved 99 clippy warnings → 1 remaining (type complexity)
 - **Error handling**: Complete refactor to `Result`-based propagation
 - **Dependencies**: Updated clap 4.x, sysinfo 0.30, chrono 0.4.31
 - **Removed**: `cmd_lib` dependency (pure Rust distro detection)
