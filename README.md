@@ -7,70 +7,29 @@
 <a href="https://github.com/nordicnode/freshfetch/releases"><img src="https://img.shields.io/github/v/release/nordicnode/freshfetch"></a>
 </p>
 
-Freshfetch is a fast, customizable system information tool written in Rust.
+A fast, customizable system information tool written in Rust. This is a continuation of the original [freshfetch](https://github.com/K4rakara/freshfetch) by K4rakara.
 
-**This repository is a personal continuation of the original [freshfetch](https://github.com/K4rakara/freshfetch) project created by K4rakara.**
+<p align="center">
+<img alt="Example output" src="./readme/config-1.png"/>
+</p>
 
-It has been extensively modernized from the original codebase with new features, improved performance, and robust error handling.
+## What's New in This Fork
 
-## Features
+This version has been extensively modernized with significant improvements:
 
-### System Information
-- **User & Host** - Username and hostname
-- **OS** - Distribution name and architecture
-- **Host** - System model/product name
-- **Kernel** - Linux kernel version
-- **Uptime** - System uptime in days/hours/minutes
-- **Packages** - Package counts from dpkg, rpm, pacman, flatpak, snap, etc.
-- **Shell** - Current shell and version (Bash, Zsh, Fish, Nushell, etc.)
-- **Resolution** - Display resolution and refresh rate
-- **DE** - Desktop environment and version (Cinnamon, GNOME, KDE, etc.)
-- **WM** - Window manager (Mutter, KWin, i3, etc.)
-- **CPU** - Processor name, cores, and frequency
-- **GPU** - Graphics card(s) with brand detection
-- **Board** - Motherboard vendor and model
-- **Memory** - RAM usage
-- **Battery** - Capacity and status (laptops only)
-- **Disk** - Root partition usage
-- **Network** - Active interface and local IP
-
-### Output Options
-- **Standard** - Classic ASCII art + Info display
-- **JSON** - Machine-readable output via `--json`
-- **Logo Only** - pure ASCII art via `--logo`
-
-### Customization
-- **Lua scripting** - Full control via `layout.lua`, `info.lua`, `art.lua`
-- **Image support** - Kitty, Sixel, and iTerm2 protocols (via `viuer`)
-- **Custom ASCII art** - 261+ distro logos or your own art
-- **Distro colors** - Automatic color theming per distribution
-
-### Technical
-- **Parallel info gathering** - Uses `rayon` for concurrent system info collection
-- **Pure Rust** - No shell-outs for distro detection
-- **Portable paths** - Uses `dirs` crate, no hardcoded `/home/` paths
-- **Robust error handling** - `Result`-based propagation, no panics
-- **Modern dependencies** - `mlua` 0.9, `sysinfo` 0.30, `clap` 4.x
-
-## Requirements
-
-- Rust 2021 Edition (1.56+)
-- Linux, BSD, or MINIX
+| Category | Changes |
+|----------|---------|
+| **New Modules** | Battery status, Disk usage, Network info |
+| **Output** | JSON output via `--json` flag |
+| **Performance** | Parallel info gathering with `rayon` |
+| **Shell Detection** | Version support for Bash, Zsh, Fish, Nushell |
+| **GPU Detection** | Fixed NVIDIA card detection |
+| **Error Handling** | Complete refactor to `Result`-based propagation (no panics) |
+| **Code Quality** | 99 clippy warnings → 1 |
+| **Dependencies** | `mlua` 0.9.9, `sysinfo` 0.30, `clap` 4.x |
+| **Portability** | Removed hardcoded paths, pure Rust distro detection |
 
 ## Installation
-
-#### Arch Linux
-
-On Arch Linux, you can install from the AUR:
-
-```bash
-yay -S freshfetch-git    # Bleeding-edge from master
-yay -S freshfetch-bin    # Pre-built stable release
-```
-
-#### Other distros
-
-Build from source:
 
 ```bash
 git clone https://github.com/nordicnode/freshfetch.git
@@ -88,36 +47,31 @@ freshfetch -a ubuntu        # Use Ubuntu's ASCII art
 freshfetch --json           # Output as machine-readable JSON
 ```
 
-## Configuration
+## System Information
+
+Displays: User, Host, OS, Kernel, Uptime, Packages, Shell, Resolution, DE, WM, CPU, GPU, Board, Memory, Battery, Disk, Network
+
+## Customization
 
 Create custom layouts in `~/.config/freshfetch/`:
-
-- `layout.lua` - Main layout combining art and info
+- `layout.lua` - Main layout
 - `info.lua` - System information display
 - `art.lua` - Custom ASCII art
 
-## Recent Changes
+Supports image display via Kitty, Sixel, and iTerm2 protocols.
 
-### v0.2.0 (2026)
-- **New info modules**: Battery, Disk, Network
-- **JSON Output**: Fully structured JSON output support
-- **Shell Detection**: Improved version detection for Bash, Fish, Nushell
-- **Parallel gathering**: Concurrent info collection with rayon
-- **mlua upgrade**: 0.6.6 → 0.9.9 for Rust compatibility
-- **Code quality**: Resolved 99 clippy warnings → 1 remaining (type complexity)
-- **Error handling**: Complete refactor to `Result`-based propagation
-- **Dependencies**: Updated clap 4.x, sysinfo 0.30, chrono 0.4.31
-- **Removed**: `cmd_lib` dependency (pure Rust distro detection)
-- **Portable paths**: Uses `dirs` crate instead of hardcoded paths
+## Requirements
+
+- Rust 2021 Edition (1.56+)
+- Linux, BSD, or MINIX
 
 ## Todo
 
-- [ ] Add colorization for all distros (72/261 complete)
-- [ ] Unit and integration tests
+- [ ] Distro colorization (72/261 complete)
+- [ ] Unit tests
 - [ ] macOS support
 
 <p align="center">
-<img alt="An example configuration" src="./readme/config-1.png"/>
-<img alt="An example configuration" src="./readme/config-2.png"/>
-<img alt="An example configuration" src="./readme/config-3.png"/>
+<img alt="Example configuration" src="./readme/config-2.png"/>
+<img alt="Example configuration" src="./readme/config-3.png"/>
 </p>
