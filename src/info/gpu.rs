@@ -56,7 +56,10 @@ impl Gpus {
                 };
 				let mut gpus = {
 					let mut to_return = Vec::new();
-                    let regex = Regex::new(r#"(?i)"(.*?(?:Display|3D|VGA).*?)" "(.*?\[.*?\])" "(?:.*?\[(.*?)\])""#).unwrap();
+                    // Regex to capture: type, brand, name
+                    // Pattern: "VGA compatible controller" "NVIDIA Corporation" "TU116 [GeForce GTX 1660 SUPER]"
+                    // Or: "Display controller" "Intel [HD Graphics 630]" "HD Graphics 630"
+                    let regex = Regex::new(r#"(?i)"(.*?(?:Display|3D|VGA).*?)" "([^"]+)" "([^"]+)""#).unwrap();
 					let lspci_lines = lspci.split("\n").collect::<Vec<&str>>();
 					for line in lspci_lines.iter() {
 						let captures = regex.captures(line);
@@ -100,7 +103,7 @@ impl Gpus {
                                     .replace("]", "")
                                     .replace("OEM", "")
                                     .replace("Advanced Micro Devices, Inc.", "")));
-                    } else if gpu.1.to_lowercase().contains("nvidea") {
+                    } else if gpu.1.to_lowercase().contains("nvidia") {
                         to_return.push(
                             Gpu::new(
                                 gpu.2.clone(),

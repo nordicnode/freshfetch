@@ -78,6 +78,7 @@ sudo cp ./target/release/freshfetch /usr/bin/
 freshfetch                  # Display system info with ASCII art
 freshfetch --logo           # Display only ASCII art
 freshfetch -a ubuntu        # Use Ubuntu's ASCII art
+freshfetch --json           # Output as machine-readable JSON
 ```
 
 ## Configuration
