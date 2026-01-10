@@ -214,6 +214,8 @@ impl Inject for Info {
 		if let Some(v) = &self.battery { v.inject(&mut self.ctx)?; }
 		if let Some(v) = &self.disk { v.inject(&mut self.ctx)?; }
 		if let Some(v) = &self.network { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.temperature { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.bluetooth { v.inject(&mut self.ctx)?; }
 		self.render()?;
 		{
 			let (w, h) = crate::utils::get_dimensions(&self.rendered);

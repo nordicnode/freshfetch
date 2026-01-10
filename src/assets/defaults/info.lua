@@ -264,16 +264,20 @@ end
 
 -- Battery
 if battery ~= nil then
+	local output = battery.capacity.."% ("..battery.status..")"
+	if battery.health ~= nil then
+		output = output.." Health: "..battery.health.."%"
+	end
+	if battery.cycles ~= nil then
+		output = output.." Cycles: "..battery.cycles
+	end
 	print(""
 		..bold()
 		..distroColors[2]
 		.."Battery"
 		..reset()
 		..": "
-		..battery.capacity
-		.."% ("
-		..battery.status
-		..")")
+		..output)
 end
 
 -- Disk
@@ -306,7 +310,29 @@ if network ~= nil then
 		..")")
 end
 
--- Palette
+-- Temperature
+if temperature ~= nil and temperature.cpu ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."Temp"
+		..reset()
+		..": "
+		..round(temperature.cpu)
+		.."°C")
+end
+
+-- Bluetooth
+if bluetooth ~= nil and bluetooth.count > 0 then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."Bluetooth"
+		..reset()
+		..": "
+		..bluetooth.count
+		.." devices")
+end
 print("")
 print(""
 	..blackBg()  .."   "
