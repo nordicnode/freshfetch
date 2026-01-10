@@ -1,3 +1,27 @@
-/target
-/pkg
-/freshfetch.tar.gz
+# Build artifacts
+/target/
+/pkg/
+
+# Release archives
+*.tar.gz
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Cargo lock (optional - uncomment if this is a library)
+# Cargo.lock
+
+# Debug files
+*.pdb
+
+# Environment files
+.env
+.env.local
