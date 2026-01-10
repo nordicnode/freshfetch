@@ -67,7 +67,7 @@ Supports image display via Kitty, Sixel, and iTerm2 protocols.
 
 ## Todo
 
-- [ ] Distro colorization (72/261 complete)
+- [x] Distro colorization
 - [ ] Unit tests
 - [ ] macOS support
 
