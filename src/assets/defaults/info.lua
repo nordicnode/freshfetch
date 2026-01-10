@@ -258,6 +258,29 @@ if temperature ~= nil and temperature.gpu ~= nil then
 		.."°C")
 end
 
+-- Monitors
+if monitors ~= nil and monitors.count > 0 then
+	if monitors.count == 1 then
+		print(""
+			..bold()
+			..distroColors[2]
+			.."Monitor"
+			..reset()
+			..": "
+			..monitors.monitors[1].name)
+	else
+		print(""
+			..bold()
+			..distroColors[2]
+			.."Monitors"
+			..reset()
+			..": ")
+		for _,monitor in pairs(monitors.monitors) do
+			print(" - "..monitor.name)
+		end
+	end
+end
+
 -- Motherboard
 if motherboard ~= nil then
 	print(""

@@ -24,6 +24,7 @@ pub(crate) mod disk;
 pub(crate) mod network;
 pub(crate) mod temperature;
 pub(crate) mod bluetooth;
+pub(crate) mod monitors;
 
 use std::fs;
 use std::path::PathBuf;
@@ -53,6 +54,7 @@ use disk::Disk;
 use network::Network;
 use temperature::Temperature;
 use bluetooth::Bluetooth;
+use monitors::Monitors;
 
 use serde::Serialize;
 
@@ -85,6 +87,7 @@ pub(crate) struct Info {
 	pub network: Option<Network>,
 	pub temperature: Option<Temperature>,
 	pub bluetooth: Option<Bluetooth>,
+	pub monitors: Option<Monitors>,
 }
 
 impl Info {
@@ -127,15 +130,18 @@ impl Info {
 			),
 		);
 		
-		let ((disk, network), (temperature, bluetooth)) = rayon::join(
+		let (((disk, network), (temperature, bluetooth)), monitors) = rayon::join(
 			|| rayon::join(
-				Disk::new,
-				Network::new,
+				|| rayon::join(
+					Disk::new,
+					Network::new,
+				),
+				|| rayon::join(
+					Temperature::new,
+					Bluetooth::new,
+				),
 			),
-			|| rayon::join(
-				Temperature::new,
-				Bluetooth::new,
-			),
+			|| Monitors::new(&kernel),
 		);
 		
 		let memory = Memory::new();
@@ -164,6 +170,7 @@ impl Info {
 			network,
 			temperature,
 			bluetooth,
+			monitors,
 		})
 	}
 	pub fn render(&mut self) -> errors::Result<()> {
@@ -216,6 +223,7 @@ impl Inject for Info {
 		if let Some(v) = &self.network { v.inject(&mut self.ctx)?; }
 		if let Some(v) = &self.temperature { v.inject(&mut self.ctx)?; }
 		if let Some(v) = &self.bluetooth { v.inject(&mut self.ctx)?; }
+		if let Some(v) = &self.monitors { v.inject(&mut self.ctx)?; }
 		self.render()?;
 		{
 			let (w, h) = crate::utils::get_dimensions(&self.rendered);
