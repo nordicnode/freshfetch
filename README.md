@@ -10,7 +10,7 @@
 A fast, customizable system information tool written in Rust. This is a continuation of the original [freshfetch](https://github.com/K4rakara/freshfetch) by K4rakara.
 
 <p align="center">
-<img alt="Example output" src="./readme/config-1.png"/>
+<img alt="Example output" src="./readme/1.png"/>
 </p>
 
 ## What's New in This Fork
@@ -73,7 +73,4 @@ Supports image display via Kitty, Sixel, and iTerm2 protocols.
 - [x] Unit tests
 - [ ] macOS support
 
-<p align="center">
-<img alt="Example configuration" src="./readme/config-2.png"/>
-<img alt="Example configuration" src="./readme/config-3.png"/>
-</p>
+
