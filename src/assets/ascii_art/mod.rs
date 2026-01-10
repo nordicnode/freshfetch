@@ -1,8 +1,14 @@
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
+/// Type of comparison for distro detection
+#[derive(Clone, Copy)]
 enum Check {
 	Is,
 	StartsWith,
 	Contains,
 }
+
 
 /// ASCII art of various distros.
 /// 
@@ -310,11 +316,29 @@ pub(crate) fn get(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
 	get_cli("linux")
 }
 
-pub(crate) fn get_cli(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
-	for art in ASCII_ART.iter() {
-		if art.0 == of {
-			return (art.3, art.4.unwrap_or([Some("\u{001b}[38;5;7m"), None, None, None]));
+/// Lazily initialized index for O(1) CLI lookups
+static CLI_INDEX: LazyLock<HashMap<&'static str, usize>> = LazyLock::new(|| {
+	let mut map = HashMap::with_capacity(ASCII_ART.len());
+	for (i, art) in ASCII_ART.iter().enumerate() {
+		if !art.0.is_empty() {
+			map.insert(art.0, i);
 		}
 	}
-	get_cli("linux")
+	map
+});
+
+pub(crate) fn get_cli(of: &str) -> (&'static str, [Option<&'static str>; 4]) {
+	if let Some(&idx) = CLI_INDEX.get(of) {
+		let art = &ASCII_ART[idx];
+		if art.3.starts_with('@') {
+			return get_cli(&art.3[1..]);
+		}
+		return (art.3, art.4.unwrap_or([Some("\u{001b}[38;5;7m"), None, None, None]));
+	}
+	// Fallback to linux
+	if of != "linux" {
+		return get_cli("linux");
+	}
+	// Should never happen, but provide safe default
+	("", [Some("\u{001b}[38;5;7m"), None, None, None])
 }
