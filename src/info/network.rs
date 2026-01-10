@@ -8,7 +8,10 @@ use mlua::prelude::*;
 use crate::Inject;
 
 /// Network interface information
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+/// Network interface information
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Network {
     pub interface: String,
     pub ip: String,

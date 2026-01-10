@@ -15,7 +15,9 @@ use mlua::prelude::*;
 use crate::{ Inject };
 use kernel::{ Kernel };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Distro {
 	pub long_name: String,
 	pub short_name: String,
@@ -126,7 +128,7 @@ impl Inject for Distro {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct DistroColors ( pub String, pub String, pub String, pub String );
 
 impl DistroColors {

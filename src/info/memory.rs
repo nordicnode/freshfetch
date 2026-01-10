@@ -8,7 +8,9 @@ use mlua::prelude::*;
 use crate::{ Inject };
 use utils::{ get_system };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Memory {
 	pub max: u64,
 	pub used: u64,

@@ -50,10 +50,17 @@ use battery::Battery;
 use disk::Disk;
 use network::Network;
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct Info {
+	#[serde(skip)]
 	ctx: Lua,
+	#[serde(skip)]
 	rendered: String,
+	#[serde(skip)]
 	width: i32,
+	#[serde(skip)]
 	height: i32,
 	pub context: Option<Context>,
 	pub distro: Distro,

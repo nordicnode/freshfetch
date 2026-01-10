@@ -14,7 +14,9 @@ use mlua::prelude::*;
 use crate::{ Inject };
 use kernel::{ Kernel };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub struct Motherboard {
     pub name: String,
     pub vendor: String,
@@ -29,8 +31,30 @@ impl Motherboard {
                 // Android
                 if Path::new("/system/app").is_dir()
                 && Path::new("/system/priv-app").is_dir() {
-                    // TODO: If you know how to get the motherboard info (not
-                    // the phone name) with getprop, lmk or make a PR.
+                    let product_board = Command::new("getprop")
+                        .arg("ro.product.board")
+                        .output()
+                        .ok()
+                        .and_then(|o| String::from_utf8(o.stdout).ok())
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+                    let product_model = Command::new("getprop")
+                        .arg("ro.product.model")
+                        .output()
+                        .ok()
+                        .and_then(|o| String::from_utf8(o.stdout).ok())
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+                    
+                    if !product_board.is_empty() {
+                        return Some(Motherboard {
+                            name: product_board,
+                            vendor: String::from("Android"),
+                            revision: product_model,
+                        });
+                    }
                     None
                 // Standard
                 } else if sys_devices_virtual_dmi_id.exists() && (

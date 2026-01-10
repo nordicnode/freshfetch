@@ -8,7 +8,10 @@ use mlua::prelude::*;
 use crate::Inject;
 
 /// Battery information for laptops
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+/// Battery information for laptops
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Battery {
     pub capacity: u8,
     pub status: String,

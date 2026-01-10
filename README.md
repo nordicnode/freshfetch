@@ -26,9 +26,11 @@ This version has been extensively modernized with significant improvements:
 | **GPU Detection** | Fixed NVIDIA card detection |
 | **Error Handling** | Complete refactor to `Result`-based propagation (no panics) |
 | **Code Quality** | 99 clippy warnings → 1 |
-| **Dependencies** | `mlua` 0.9.9, `sysinfo` 0.30, `clap` 4.x |
-| **Portability** | Removed hardcoded paths, pure Rust distro detection |
+| **Dependencies** | `mlua` 0.9.9, `sysinfo` 0.30, `clap` 4.x, `serde` 1.0, `serde_json` 1.0 |
+| **Portability** | Removed hardcoded paths, pure Rust distro detection, Android motherboard support |
 | **Colorization** | Full ANSI support for all 120+ distributions |
+| **Internal** | Refactored JSON output to use Serde-based serialization |
+| **Testing** | Initial unit test suite for core parsing logic |
 
 ## Installation
 
@@ -68,7 +70,7 @@ Supports image display via Kitty, Sixel, and iTerm2 protocols.
 
 ## Todo
 
-- [ ] Unit tests
+- [x] Unit tests
 - [ ] macOS support
 
 <p align="center">

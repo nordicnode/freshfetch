@@ -9,7 +9,9 @@ use crate::{ Inject };
 use std::fs::{ read_to_string };
 use std::env::{ var };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Context {
 	pub user: String,
 	pub host: String,

@@ -12,6 +12,9 @@ use mlua::prelude::*;
 use crate::Inject;
 use kernel::Kernel;
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct Shell {
 	pub name: String,
 	pub version: String,

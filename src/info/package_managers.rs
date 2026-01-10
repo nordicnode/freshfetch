@@ -11,6 +11,9 @@ use mlua::prelude::*;
 use crate::Inject;
 use kernel::Kernel;
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct PackageManager {
 	pub name: String,
 	pub packages: i32,
@@ -25,6 +28,7 @@ impl PackageManager {
 	}
 }
 
+#[derive(Serialize)]
 pub(crate) struct PackageManagers(pub Vec<PackageManager>);
 
 impl PackageManagers {

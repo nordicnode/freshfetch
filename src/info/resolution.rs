@@ -17,7 +17,9 @@ use crate::{ Inject };
 use utils::{ which::{ which } };
 use kernel::{ Kernel };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Resolution {
 	pub width: u16,
 	pub height: u16,

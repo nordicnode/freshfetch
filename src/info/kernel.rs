@@ -8,6 +8,9 @@ use uname::{ uname };
 
 use crate::{ Inject };
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct Kernel {
 	pub name: String,
 	pub version: String,

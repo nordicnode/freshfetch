@@ -8,7 +8,10 @@ use sysinfo::Disks;
 use crate::Inject;
 
 /// Disk usage information
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+/// Disk usage information
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Disk {
     pub name: String,
     pub mount_point: String,

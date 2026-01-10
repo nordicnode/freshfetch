@@ -12,7 +12,9 @@ use regex::{ Regex };
 use crate::{ Inject };
 use kernel::{ Kernel };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Host {
     pub model: String,
 }

@@ -13,7 +13,9 @@ use regex::{ Regex };
 use crate::{ Inject }; 
 use kernel::{ Kernel };
 
-#[derive(Debug)]
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub(crate) struct Cpu {
 	/// The name of the CPU.
 	pub name: String,
@@ -113,52 +115,7 @@ impl Cpu {
 		}
 		if let (Some(name_val), Some(freq_val), Some(cores_val)) = (name, freq, cores) {
 			Some(Cpu {
-				name: {
-					let mut to_return = name_val
-						.clone()
-						.replace("(tm)", "")
-						.replace("(TM)", "")
-						.replace("(R)", "")
-						.replace("(r)", "")
-						.replace("CPU", "")
-						.replace("Processor", "")
-						.replace("Dual-Core", "")
-						.replace("Quad-Core", "")
-						.replace("Six-Core", "")
-						.replace("Eight-Core", "")
-						.replace("Quad-Core", "");
-					{
-						let regex = Regex::new(r#"(?i)\d\d?-Core"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					{
-						let regex = Regex::new(r#"(?i), .*? Compute Cores"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					to_return = to_return.replace("Cores ", " ");
-					{
-						let regex = Regex::new(r#"(?i)\("AuthenticAMD".*?\)"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					{
-						let regex = Regex::new(r#"(?i)with Radeon .*? Graphics"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					to_return = to_return
-						.replace(", altivec supported", "")
-						.replace("Technologies, Inc", "")
-						.replace("Core2", "Core 2");
-					{
-						let regex = Regex::new(r#"FPU.*?"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					{
-						let regex = Regex::new(r#"Chip Revision.*?"#).unwrap();
-						to_return = String::from(regex.replace_all(&to_return, ""));
-					}
-					to_return = String::from(to_return.trim());
-					to_return
-				},
+				name: Self::clean_cpu_name(&name_val),
 				full_name: name_val,
 				freq: freq_val,
 				cores: cores_val,
@@ -166,6 +123,70 @@ impl Cpu {
 		} else {
 			None
 		}
+	}
+
+	fn clean_cpu_name(name: &str) -> String {
+		let mut to_return = name
+			.replace("(tm)", "")
+			.replace("(TM)", "")
+			.replace("(R)", "")
+			.replace("(r)", "")
+			.replace("CPU", "")
+			.replace("Intel", "")
+			.replace("AMD", "")
+			.replace("Processor", "")
+			.replace("Dual-Core", "")
+			.replace("Quad-Core", "")
+			.replace("Six-Core", "")
+			.replace("Eight-Core", "")
+			.replace("Quad-Core", "");
+		{
+			let regex = Regex::new(r#"(?i)\d\d?-Core"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		{
+			let regex = Regex::new(r#"(?i), .*? Compute Cores"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		to_return = to_return.replace("Cores ", " ");
+		{
+			let regex = Regex::new(r#"(?i)\("AuthenticAMD".*?\)"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		{
+			let regex = Regex::new(r#"(?i)with Radeon .*? Graphics"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		to_return = to_return
+			.replace(", altivec supported", "")
+			.replace("Technologies, Inc", "")
+			.replace("Core2", "Core 2");
+		{
+			let regex = Regex::new(r#"FPU.*?"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		{
+			let regex = Regex::new(r#"Chip Revision.*?"#).unwrap();
+			to_return = String::from(regex.replace_all(&to_return, ""));
+		}
+		
+		// Squash multiple spaces and trim
+		let regex = Regex::new(r#"\s+"#).unwrap();
+		to_return = String::from(regex.replace_all(&to_return, " "));
+		
+		String::from(to_return.trim())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_clean_cpu_name() {
+		assert_eq!(Cpu::clean_cpu_name("Intel(R) Core(TM) i7-10700K CPU @ 3.80GHz"), "Core i7-10700K @ 3.80GHz");
+		assert_eq!(Cpu::clean_cpu_name("AMD Ryzen 7 3700X 8-Core Processor"), "Ryzen 7 3700X");
+		assert_eq!(Cpu::clean_cpu_name("Intel(R) Core(TM)2 Duo CPU E8400 @ 3.00GHz"), "Core 2 Duo E8400 @ 3.00GHz");
 	}
 }
 

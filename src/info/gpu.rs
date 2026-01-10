@@ -12,7 +12,9 @@ use mlua::prelude::*;
 use crate::{ Inject };
 use kernel::{ Kernel };
 
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Gpu {
     pub brand: String,
     pub name: String,
@@ -28,7 +30,7 @@ impl Gpu {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct Gpus ( pub Vec<Gpu> );
 
 impl Gpus {

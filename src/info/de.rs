@@ -15,6 +15,9 @@ use crate::{ Inject };
 use kernel::{ Kernel };
 use distro::{ Distro };
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct De ( pub String, pub String, );
 
 impl De {

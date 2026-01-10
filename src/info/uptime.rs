@@ -14,6 +14,9 @@ use sysinfo::{ System };
 use crate::{ Inject };
 use kernel::{ Kernel };
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct Uptime ( pub DateTime<Utc> );
 
 impl Uptime {

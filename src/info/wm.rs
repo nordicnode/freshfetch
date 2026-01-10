@@ -14,6 +14,9 @@ use crate::{ Inject };
 use kernel::{ Kernel };
 use utils::{ PsAux, Grep };
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct Wm ( pub String );
 
 impl Wm {
