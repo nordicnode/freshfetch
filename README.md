@@ -10,7 +10,7 @@
 A fast, customizable system information tool written in Rust. This is a continuation of the original [freshfetch](https://github.com/K4rakara/freshfetch) by K4rakara.
 
 <p align="center">
-<img alt="Example output" src="./readme/1.png"/>
+  ![Example output](./readme/1.png)
 </p>
 
 ## What's New in This Fork
