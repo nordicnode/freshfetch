@@ -19,7 +19,7 @@ This version has been extensively modernized with significant improvements:
 
 | Category | Changes |
 |----------|---------|
-| **New Modules** | Battery status, Disk usage, Network info |
+| **New Modules** | Battery (with health/cycles), Disk usage, Network info, Temperature sensors, Bluetooth devices |
 | **Output** | JSON output via `--json` flag |
 | **Performance** | Parallel info gathering with `rayon` |
 | **Shell Detection** | Version support for Bash, Zsh, Fish, Nushell |
@@ -53,7 +53,7 @@ freshfetch --json           # Output as machine-readable JSON
 
 ## System Information
 
-Displays: User, Host, OS, Kernel, Uptime, Packages, Shell, Resolution, DE, WM, CPU, GPU, Board, Memory, Battery, Disk, Network
+Displays: User, Host, OS, Kernel, Uptime, Packages, Shell, Resolution, DE, WM, CPU, GPU, Board, Memory, Battery (with health & cycles), Disk, Network, Temperature, Bluetooth
 
 ## Customization
 
