@@ -28,6 +28,7 @@ This version has been extensively modernized with significant improvements:
 | **Code Quality** | 99 clippy warnings → 1 |
 | **Dependencies** | `mlua` 0.9.9, `sysinfo` 0.30, `clap` 4.x |
 | **Portability** | Removed hardcoded paths, pure Rust distro detection |
+| **Colorization** | Full ANSI support for all 120+ distributions |
 
 ## Installation
 
@@ -67,7 +68,6 @@ Supports image display via Kitty, Sixel, and iTerm2 protocols.
 
 ## Todo
 
-- [x] Distro colorization
 - [ ] Unit tests
 - [ ] macOS support
 
