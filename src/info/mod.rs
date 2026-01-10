@@ -22,6 +22,8 @@ pub(crate) mod image;
 pub(crate) mod battery;
 pub(crate) mod disk;
 pub(crate) mod network;
+pub(crate) mod temperature;
+pub(crate) mod bluetooth;
 
 use std::fs;
 use std::path::PathBuf;
@@ -49,6 +51,8 @@ use host::Host;
 use battery::Battery;
 use disk::Disk;
 use network::Network;
+use temperature::Temperature;
+use bluetooth::Bluetooth;
 
 use serde::Serialize;
 
@@ -79,6 +83,8 @@ pub(crate) struct Info {
 	pub battery: Option<Battery>,
 	pub disk: Option<Disk>,
 	pub network: Option<Network>,
+	pub temperature: Option<Temperature>,
+	pub bluetooth: Option<Bluetooth>,
 }
 
 impl Info {
@@ -121,13 +127,18 @@ impl Info {
 			),
 		);
 		
-		let ((disk, network), memory) = rayon::join(
+		let ((disk, network), (temperature, bluetooth)) = rayon::join(
 			|| rayon::join(
 				Disk::new,
 				Network::new,
 			),
-			Memory::new,
+			|| rayon::join(
+				Temperature::new,
+				Bluetooth::new,
+			),
 		);
+		
+		let memory = Memory::new();
 		
 		Ok(Info {
 			ctx: Lua::new(),
@@ -151,6 +162,8 @@ impl Info {
 			battery,
 			disk,
 			network,
+			temperature,
+			bluetooth,
 		})
 	}
 	pub fn render(&mut self) -> errors::Result<()> {
