@@ -53,11 +53,22 @@ impl Temperature {
         self.sensors.iter().map(|s| s.temp).max_by(|a, b| a.partial_cmp(b).unwrap())
     }
     
-    /// Get CPU temperature (first sensor with "cpu" in label)
+    /// Get CPU temperature (first sensor with "cpu" or "core" in label)
     pub fn cpu_temp(&self) -> Option<f32> {
         self.sensors
             .iter()
             .find(|s| s.label.to_lowercase().contains("cpu") || s.label.to_lowercase().contains("core"))
+            .map(|s| s.temp)
+    }
+    
+    /// Get GPU temperature (first sensor with "gpu" or "nvidia" or "amdgpu" in label)
+    pub fn gpu_temp(&self) -> Option<f32> {
+        self.sensors
+            .iter()
+            .find(|s| {
+                let label = s.label.to_lowercase();
+                label.contains("gpu") || label.contains("nvidia") || label.contains("amdgpu") || label.contains("radeon")
+            })
             .map(|s| s.temp)
     }
 }
@@ -87,6 +98,9 @@ impl Inject for Temperature {
         // Add convenience fields
         if let Some(cpu) = self.cpu_temp() {
             t.set("cpu", cpu).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
+        }
+        if let Some(gpu) = self.gpu_temp() {
+            t.set("gpu", gpu).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;
         }
         if let Some(max) = self.max_temp() {
             t.set("max", max).map_err(|e| errors::FreshfetchError::Lua(e.to_string()))?;

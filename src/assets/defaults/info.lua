@@ -311,15 +311,27 @@ if network ~= nil then
 end
 
 -- Temperature
-if temperature ~= nil and temperature.cpu ~= nil then
-	print(""
-		..bold()
-		..distroColors[2]
-		.."Temp"
-		..reset()
-		..": "
-		..round(temperature.cpu)
-		.."°C")
+if temperature ~= nil then
+	if temperature.cpu ~= nil then
+		print(""
+			..bold()
+			..distroColors[2]
+			.."CPU Temp"
+			..reset()
+			..": "
+			..round(temperature.cpu)
+			.."°C")
+	end
+	if temperature.gpu ~= nil then
+		print(""
+			..bold()
+			..distroColors[2]
+			.."GPU Temp"
+			..reset()
+			..": "
+			..round(temperature.gpu)
+			.."°C")
+	end
 end
 
 -- Bluetooth
