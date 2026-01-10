@@ -29,6 +29,7 @@ This version has been extensively modernized with significant improvements:
 | **Dependencies** | `mlua` 0.9.9, `sysinfo` 0.30, `clap` 4.x, `serde` 1.0, `serde_json` 1.0 |
 | **Portability** | Removed hardcoded paths, pure Rust distro detection, Android motherboard support |
 | **Colorization** | Full ANSI support for all 120+ distributions |
+| **ASCII Art** | O(1) lookup via LazyLock HashMap (270+ entries indexed) |
 | **Internal** | Refactored JSON output to use Serde-based serialization |
 | **Testing** | Initial unit test suite for core parsing logic |
 
