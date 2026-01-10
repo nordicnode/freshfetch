@@ -7,7 +7,9 @@ lazy_static! {
 	static ref SYSTEM: Mutex<System> = Mutex::new(System::new());
 }
 
-pub(crate) fn get_system() -> MutexGuard<'static, System> { SYSTEM.lock().unwrap() }
+pub(crate) fn get_system() -> MutexGuard<'static, System> {
+	SYSTEM.lock().unwrap_or_else(|e| e.into_inner())
+}
 
 #[derive(Clone, Debug)]
 pub(crate) struct Grep {
