@@ -209,6 +209,18 @@ if cpu ~= nil then
 		..freq)
 end
 
+-- CPU Temp (right after CPU)
+if temperature ~= nil and temperature.cpu ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."CPU Temp"
+		..reset()
+		..": "
+		..round(temperature.cpu)
+		.."°C")
+end
+
 -- GPU
 if gpus ~= nil then
 	if #gpus ~= 1 then
@@ -232,6 +244,18 @@ if gpus ~= nil then
 			.." "
 			..gpus[1].name)
 	end
+end
+
+-- GPU Temp (right after GPU)
+if temperature ~= nil and temperature.gpu ~= nil then
+	print(""
+		..bold()
+		..distroColors[2]
+		.."GPU Temp"
+		..reset()
+		..": "
+		..round(temperature.gpu)
+		.."°C")
 end
 
 -- Motherboard
@@ -308,30 +332,6 @@ if network ~= nil then
 		.." ("
 		..network.ip
 		..")")
-end
-
--- Temperature
-if temperature ~= nil then
-	if temperature.cpu ~= nil then
-		print(""
-			..bold()
-			..distroColors[2]
-			.."CPU Temp"
-			..reset()
-			..": "
-			..round(temperature.cpu)
-			.."°C")
-	end
-	if temperature.gpu ~= nil then
-		print(""
-			..bold()
-			..distroColors[2]
-			.."GPU Temp"
-			..reset()
-			..": "
-			..round(temperature.gpu)
-			.."°C")
-	end
 end
 
 -- Bluetooth
